@@ -8,102 +8,68 @@ A production-ready SaaS application for automated invoice processing using OCR +
 - **Backend**: Next.js API Routes
 - **Database**: PostgreSQL + Drizzle ORM
 - **Auth**: NextAuth v5 (Google OAuth)
-- **OCR**: Tesseract.js
-- **AI**: OpenAI GPT-4o-mini
+- **OCR**: Docling (ML-powered layout parsing)
+- **AI**: Groq (Llama-3-70b-8192) for ultra-fast extraction
+- **Payments**: Lemon Squeezy (Merchant of Record)
 - **Storage**: Local filesystem (`uploads/`)
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- PostgreSQL database
-- Google OAuth credentials ([Console](https://console.cloud.google.com/apis/credentials))
-- OpenAI API key ([Platform](https://platform.openai.com/api-keys))
+- Docker and Docker Compose
+- Google OAuth credentials
+- Groq API key (free at console.groq.com)
+- Lemon Squeezy Store
 
-### 1. Install Dependencies
+### 1. Configure Environment
 
 ```bash
 cd app
-npm install
-```
-
-### 2. Configure Environment
-
-```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your values:
+Edit `.env` with your values.
 
-```
-DATABASE_URL=postgresql://user:password@localhost:5432/invoice_app
-NEXTAUTH_SECRET=generate-a-random-secret-here
-GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-client-secret
-OPENAI_API_KEY=sk-your-openai-key
-```
-
-> **Generate a secret**: `openssl rand -base64 32`
-
-### 3. Set Up Database
-
-Create the database:
+### 2. Run with Docker
 
 ```bash
-createdb invoice_app
-```
-
-Push the schema:
-
-```bash
-npx drizzle-kit push
-```
-
-### 4. Run Development Server
-
-```bash
-npm run dev
+docker compose build
+docker compose up -d
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
 
-## Google OAuth Setup
+## Lemon Squeezy Setup
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-2. Create a new OAuth 2.0 Client ID
-3. Set **Authorized redirect URIs** to: `http://localhost:3000/api/auth/callback/google`
-4. Copy Client ID and Secret into `.env`
+1. **Create a Store**: Sign up at [Lemon Squeezy](https://app.lemonsqueezy.com/) and create a store.
+2. **Create Products**: Create three subscription products:
+   - **Starter** ($29/mo)
+   - **Growth** ($99/mo)
+   - **Business** (Custom/Contact)
+3. **Get Variant IDs**: In the Lemon Squeezy dashboard, find the **Variant ID** for each plan.
+4. **Configure Webhook**:
+   - Go to Settings > Webhooks.
+   - Add a new webhook URL pointing to: `https://your-domain.com/api/webhooks/lemonsqueezy` (use **ngrok** for local testing).
+   - Select events: `subscription_created`, `subscription_updated`, `subscription_cancelled`, `subscription_expired`.
+   - Set a **Webhook Secret** and copy it to your `.env`.
+5. **API Key**: Generate an API Key in Settings > API and copy it to `LEMONSQUEEZY_API_KEY`.
 
 ## Features
 
-### Upload
-- Drag-and-drop or click to upload
-- Multi-file support (PDF, JPG, PNG, TIFF, BMP)
-- 10MB max file size
-- Real-time upload progress
-
 ### AI Processing Pipeline
-1. **OCR** — Tesseract.js extracts raw text from documents
-2. **AI Extraction** — GPT-4o-mini parses structured invoice data
-3. **Storage** — Results stored with vendor, amount, date, line items
+1. **OCR** — **Docling** microservice uses ML models for accurate layout and table extraction.
+2. **AI Extraction** — **Llama 3** (via Groq) parses the OCR markdown into structured JSON.
+3. **Usage Gating** — Tiered monthly limits enforced at the API level.
 
-### Dashboard
-- Stats overview (total, processed, errors, total amount)
-- Searchable, filterable invoice table
-- Sort by date, vendor, amount, status
-- Pagination
-
-### Invoice Detail
-- View all extracted fields
-- Edit any field inline
-- Add/edit/delete line items
-- Reprocess failed documents
-- View raw OCR text
-
-### Export
-- Export selected or all invoices to CSV
-- Includes all fields and line items
+### Subscriptions (Lemon Squeezy)
+- **Merchant of Record**: Lemon Squeezy handles all global sales tax (VAT/GST) for you.
+- **Cambodia Friendly**: Supports payouts via PayPal, ideal for founders in Cambodia.
+- **Tiered Plans**:
+  - **Free**: 100 docs/mo
+  - **Starter**: 1,000 docs/mo
+  - **Growth**: 10,000 docs/mo
+  - **Business**: 50,000 docs/mo
 
 ## Project Structure
 
@@ -111,51 +77,23 @@ Open [http://localhost:3000](http://localhost:3000)
 app/
 ├── src/
 │   ├── app/
-│   │   ├── (dashboard)/         # Protected pages
-│   │   │   ├── dashboard/       # Main dashboard
-│   │   │   ├── upload/          # Upload page
-│   │   │   └── invoices/[id]/   # Invoice detail
-│   │   ├── api/                 # API routes
-│   │   │   ├── auth/            # NextAuth
-│   │   │   ├── documents/       # CRUD documents
-│   │   │   ├── invoices/[id]/   # Update invoice
-│   │   │   ├── upload/          # File upload
-│   │   │   ├── process/         # OCR + AI pipeline
-│   │   │   └── export/          # CSV export
-│   │   └── login/               # Login page
-│   ├── components/
-│   │   ├── ui/                  # ShadCN components
-│   │   ├── layout/              # Sidebar
-│   │   └── providers.tsx        # Auth + toast providers
+│   │   ├── api/
+│   │   │   ├── checkout/        # Create LS checkout sessions
+│   │   │   ├── portal/          # Customer portal redirect
+│   │   │   └── webhooks/        # Billing webhooks
 │   ├── lib/
-│   │   ├── db/                  # Drizzle schema + client
-│   │   ├── auth.ts              # NextAuth config
-│   │   ├── ocr.ts               # Tesseract wrapper
-│   │   ├── ai-extract.ts        # OpenAI extraction
-│   │   ├── storage.ts           # File storage
-│   │   └── utils.ts             # Utilities
-│   └── types/                   # TypeScript types
-├── drizzle.config.ts
-└── uploads/                     # Local file storage
+│   │   ├── billing/             # Billing abstraction layer
+│   │   │   ├── index.ts         # Generic billing interface
+│   │   │   └── lemonsqueezy.ts  # LS provider implementation
+│   │   ├── usage.ts             # Tier limits & tracking
+│   │   └── ocr.ts               # Docling client
 ```
-
-## Database Schema
-
-| Table | Description |
-|-------|-------------|
-| `users` | User accounts (synced from Google OAuth) |
-| `documents` | Uploaded files with status tracking |
-| `extracted_invoices` | Parsed invoice data (1:1 with documents) |
-| `line_items` | Invoice line items (many per invoice) |
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/upload` | Upload files |
+| POST | `/api/v1/extract` | Public API for document extraction |
+| POST | `/api/checkout` | Create billing checkout session |
+| GET | `/api/portal` | Get customer billing portal |
 | POST | `/api/process` | Process document (OCR + AI) |
-| GET | `/api/documents` | List documents with filters |
-| GET | `/api/documents/:id` | Get document detail |
-| DELETE | `/api/documents/:id` | Delete document |
-| PUT | `/api/invoices/:id` | Update invoice data |
-| POST | `/api/export` | Export to CSV |
