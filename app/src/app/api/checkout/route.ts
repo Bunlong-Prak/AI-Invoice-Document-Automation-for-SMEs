@@ -1,47 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { stripe, STRIPE_PLANS } from "@/lib/stripe";
+import { billing, SubscriptionTier } from "@/lib/billing";
 
 export async function POST(request: NextRequest) {
   const session = await auth();
-  if (!session?.user?.id) {
+  if (!session?.user?.id || !session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const { plan } = await request.json();
     
-    if (!plan || !STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS]) {
+    const validTiers: Exclude<SubscriptionTier, "free">[] = ["starter", "growth", "business"];
+    
+    if (!plan || !validTiers.includes(plan as any)) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    const priceId = STRIPE_PLANS[plan as keyof typeof STRIPE_PLANS].priceId;
+    const { url } = await billing.createCheckoutSession(
+      session.user.id,
+      session.user.email,
+      plan as Exclude<SubscriptionTier, "free">
+    );
 
-    if (!priceId) {
-      return NextResponse.json({ error: "Price ID not configured" }, { status: 500 });
-    }
-
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      success_url: `${request.nextUrl.origin}/dashboard?success=true`,
-      cancel_url: `${request.nextUrl.origin}/dashboard?canceled=true`,
-      customer_email: session.user.email!,
-      metadata: {
-        userId: session.user.id,
-        plan: plan,
-      },
-    });
-
-    return NextResponse.json({ url: checkoutSession.url });
+    return NextResponse.json({ url });
   } catch (error: any) {
-    console.error("Stripe error:", error);
+    console.error("Checkout error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
