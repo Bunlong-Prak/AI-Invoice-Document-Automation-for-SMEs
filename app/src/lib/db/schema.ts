@@ -27,6 +27,10 @@ export const users = pgTable("users", {
   subscriptionTier: varchar("subscription_tier", { length: 50 }).default("free").notNull(),
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  lemonsqueezyCustomerId: varchar("lemonsqueezy_customer_id", { length: 255 }),
+  lemonsqueezySubscriptionId: varchar("lemonsqueezy_subscription_id", { length: 255 }),
+  lemonsqueezyVariantId: varchar("lemonsqueezy_variant_id", { length: 255 }),
+  lemonsqueezyOrderId: varchar("lemonsqueezy_order_id", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
