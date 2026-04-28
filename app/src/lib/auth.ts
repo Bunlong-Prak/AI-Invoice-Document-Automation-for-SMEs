@@ -1,16 +1,11 @@
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { authConfig } from "./auth.config";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-  ],
+export const { handlers, signIn, signOut } = NextAuth({
+  ...authConfig,
   callbacks: {
     async signIn({ user }) {
       if (!user.email) return false;
@@ -46,8 +41,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-  pages: {
-    signIn: "/login",
+});
+
+// Bypass authentication with a mock local user
+export const auth = async () => ({
+  user: {
+    id: "00000000-0000-0000-0000-000000000000",
+    name: "Local Offline User",
+    email: "local@example.com",
+    image: "",
   },
-  secret: process.env.NEXTAUTH_SECRET,
 });

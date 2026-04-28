@@ -30,9 +30,7 @@ export const users = pgTable("users", {
 // Documents table
 export const documents = pgTable("documents", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull(),
   filename: varchar("filename", { length: 255 }).notNull(),
   originalName: varchar("original_name", { length: 255 }).notNull(),
   mimeType: varchar("mime_type", { length: 100 }).notNull(),
