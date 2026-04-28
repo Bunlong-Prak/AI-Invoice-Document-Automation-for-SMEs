@@ -18,15 +18,31 @@ interface ApiKey {
   lastUsedAt: string | null;
 }
 
+interface UsageStats {
+  tier: string;
+  used: number;
+  limit: number;
+  remaining: number;
+}
+
 export default function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newKeyName, setNewKeyName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [usage, setUsage] = useState<UsageStats | null>(null);
 
   useEffect(() => {
     fetchKeys();
+    fetchUsage();
   }, []);
+
+  const fetchUsage = async () => {
+    try {
+      const res = await fetch("/api/usage");
+      if (res.ok) setUsage(await res.json());
+    } catch {}
+  };
 
   const fetchKeys = async () => {
     try {
@@ -129,8 +145,8 @@ export default function ApiKeysPage() {
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-medium">Free Plan</p>
-                <p className="text-2xl font-bold">1 / 100</p>
+                <p className="text-sm font-medium capitalize">{usage?.tier || "free"} Plan</p>
+                <p className="text-2xl font-bold">{usage?.used ?? "—"} / {usage?.limit ?? "100"}</p>
                 <p className="text-xs text-muted-foreground">Requests this month</p>
               </div>
               <BarChart3 className="h-8 w-8 text-muted-foreground" />
