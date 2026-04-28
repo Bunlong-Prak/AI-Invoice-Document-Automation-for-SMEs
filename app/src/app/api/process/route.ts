@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Verify document ownership and get details
     const doc = await db
-...
+      .select()
       .from(documents)
       .where(
         and(
