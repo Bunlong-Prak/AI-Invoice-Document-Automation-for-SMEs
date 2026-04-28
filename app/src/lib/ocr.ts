@@ -1,22 +1,20 @@
 import fs from "fs";
-import FormData from "form-data";
 import path from "path";
 
 export async function extractTextFromImage(filePath: string): Promise<string> {
   const serviceUrl = process.env.DOCLING_SERVICE_URL || "http://localhost:8000";
   
   try {
+    // Use native Node.js FormData and Blob instead of the npm package
+    const fileBuffer = fs.readFileSync(filePath);
+    const blob = new Blob([fileBuffer]);
+    
     const formData = new FormData();
-    const fileStream = fs.createReadStream(filePath);
-    formData.append("file", fileStream, path.basename(filePath));
+    formData.append("file", blob, path.basename(filePath));
 
     const response = await fetch(`${serviceUrl}/extract`, {
       method: "POST",
-      body: formData as any, // Form-data type casting for fetch
-      headers: {
-        // Form-data generates its own boundary headers
-        // ...formData.getHeaders(), // Node.js fetch doesn't need this typically if it's the native node-fetch/undici
-      },
+      body: formData,
     });
 
     if (!response.ok) {
