@@ -4,6 +4,7 @@ import type { ExtractedInvoiceData } from "@/types";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1", // Use Groq's free API
 });
 
 const LineItemSchema = z.object({
@@ -61,7 +62,7 @@ export async function extractInvoiceData(
 ): Promise<ExtractedInvoiceData> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama3-70b-8192", // Fast and free model from Groq
       messages: [
         {
           role: "system",
