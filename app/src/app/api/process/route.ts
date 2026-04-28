@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { documents, extractedInvoices, lineItems } from "@/lib/db/schema";
+import { documents, extractedInvoices, lineItems, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { extractTextFromFile } from "@/lib/ocr";
 import { extractInvoiceData } from "@/lib/ai-extract";
+import { checkUsageLimit, logUsage } from "@/lib/usage";
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -23,9 +24,27 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Get user info for usage and subscription
+    const [user] = await db
+      .select({
+        subscriptionTier: users.subscriptionTier,
+      })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+
+    const usage = await checkUsageLimit(session.user.id, user?.subscriptionTier || "free");
+
+    if (usage.hasReachedLimit) {
+      return NextResponse.json(
+        { error: "Usage limit reached", usage },
+        { status: 403 }
+      );
+    }
+
     // Verify document ownership and get details
     const doc = await db
-      .select()
+...
       .from(documents)
       .where(
         and(
@@ -99,6 +118,9 @@ export async function POST(request: NextRequest) {
         .update(documents)
         .set({ status: "processed" })
         .where(eq(documents.id, documentId));
+
+      // Log usage
+      await logUsage(session.user.id, null, "/api/process", 200);
 
       return NextResponse.json({
         success: true,

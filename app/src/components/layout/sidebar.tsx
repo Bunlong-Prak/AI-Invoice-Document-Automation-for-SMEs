@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Key,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,6 +29,11 @@ const navItems = [
     label: "Upload",
     href: "/upload",
     icon: Upload,
+  },
+  {
+    label: "API Keys",
+    href: "/settings/keys",
+    icon: Key,
   },
 ];
 

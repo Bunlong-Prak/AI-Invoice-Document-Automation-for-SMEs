@@ -3,12 +3,24 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { documents, extractedInvoices, lineItems, users } from "@/lib/db/schema";
 import { eq, and, desc, ilike, gte, lte, sql, count } from "drizzle-orm";
+import { checkUsageLimit } from "@/lib/usage";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Get user info for usage and subscription
+  const [user] = await db
+    .select({
+      subscriptionTier: users.subscriptionTier,
+    })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+
+  const usage = await checkUsageLimit(session.user.id, user?.subscriptionTier || "free");
 
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") || "";
@@ -115,6 +127,8 @@ export async function GET(request: NextRequest) {
       page,
       limit,
       stats,
+      usage,
+      subscriptionTier: user?.subscriptionTier || "free",
     });
   } catch (error) {
     console.error("Error fetching documents:", error);

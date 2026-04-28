@@ -24,13 +24,37 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }),
   image: text("image"),
+  subscriptionTier: varchar("subscription_tier", { length: 50 }).default("free").notNull(),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// API Keys table
+export const apiKeys = pgTable("api_keys", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  key: varchar("key", { length: 255 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).default("Default Key"),
+  isActive: integer("is_active").default(1).notNull(), // 1 for active, 0 for inactive
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at"),
+});
+
+// Usage Logs table
+export const usageLogs = pgTable("usage_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  apiKeyId: uuid("api_key_id").references(() => apiKeys.id, { onDelete: "set null" }),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  endpoint: varchar("endpoint", { length: 255 }).notNull(),
+  status: integer("status").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
 // Documents table
 export const documents = pgTable("documents", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   filename: varchar("filename", { length: 255 }).notNull(),
   originalName: varchar("original_name", { length: 255 }).notNull(),
   mimeType: varchar("mime_type", { length: 100 }).notNull(),
@@ -76,6 +100,27 @@ export const lineItems = pgTable("line_items", {
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   documents: many(documents),
+  apiKeys: many(apiKeys),
+  usageLogs: many(usageLogs),
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one, many }) => ({
+  user: one(users, {
+    fields: [apiKeys.userId],
+    references: [users.id],
+  }),
+  usageLogs: many(usageLogs),
+}));
+
+export const usageLogsRelations = relations(usageLogs, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [usageLogs.apiKeyId],
+    references: [apiKeys.id],
+  }),
+  user: one(users, {
+    fields: [usageLogs.userId],
+    references: [users.id],
+  }),
 }));
 
 export const documentsRelations = relations(documents, ({ one }) => ({

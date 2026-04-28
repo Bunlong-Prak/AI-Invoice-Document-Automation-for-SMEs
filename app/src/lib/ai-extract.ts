@@ -24,31 +24,38 @@ const InvoiceSchema = z.object({
   line_items: z.array(LineItemSchema).default([]),
 });
 
-const EXTRACTION_PROMPT = `You are an expert invoice data extraction system. Your job is to extract structured data from raw OCR text of invoices.
+const EXTRACTION_PROMPT = `You are an expert financial document data extraction system. Your job is to extract structured data from OCR text of ANY financial document — invoices, receipts, payment confirmations, bank transfers, transaction slips, purchase orders, or bills.
 
 RULES:
-1. Extract ALL available information from the text
+1. Extract ALL available information from the text regardless of document type
 2. If a field is not found or unclear, use an empty string ""
-3. For amounts, extract just the number (no currency symbols). Use "." as decimal separator
-4. For date, use ISO format YYYY-MM-DD when possible
-5. Currency should be a 3-letter code (USD, EUR, GBP, etc.)
-6. Extract ALL line items you can identify
+3. For amounts, extract the POSITIVE number only (no currency symbols, no minus sign). Use "." as decimal separator
+4. For date, use ISO format YYYY-MM-DD when possible. Convert "Mar 31, 2026" → "2026-03-31"
+5. Currency should be a 3-letter code (USD, EUR, GBP, KHR, etc.)
+6. Extract ALL line items or transaction details you can identify
 7. Your response MUST be valid JSON only — no markdown, no explanation, no extra text
-8. Be tolerant of OCR errors, messy formatting, and unusual invoice layouts
+8. Be tolerant of OCR errors, messy formatting, and unusual layouts
 
-Extract the following structure:
+FIELD MAPPING for different document types:
+- "vendor_name": seller, recipient, payee, merchant, vendor, company name, or "To:" field
+- "invoice_number": invoice #, receipt #, transaction ID, Trx. ID, reference #, order #, or any unique document identifier
+- "date": invoice date, transaction date, receipt date, payment date
+- "total_amount": total, amount, grand total, original amount (always positive)
+- "tax_amount": tax, VAT, GST amount if present
+
+Extract this structure:
 {
-  "vendor_name": "Company name of the vendor/seller",
-  "invoice_number": "Invoice/receipt number",
-  "date": "Invoice date in YYYY-MM-DD format",
+  "vendor_name": "Seller/recipient/payee name",
+  "invoice_number": "Any unique document or transaction identifier",
+  "date": "Document date in YYYY-MM-DD format",
   "currency": "3-letter currency code",
-  "total_amount": "Total amount as a number string",
-  "tax_amount": "Tax/VAT amount as a number string",
+  "total_amount": "Total amount as a positive number string",
+  "tax_amount": "Tax amount as a number string, or empty string",
   "line_items": [
     {
-      "description": "Item description",
-      "quantity": "Quantity as a number string",
-      "unit_price": "Unit price as a number string",
+      "description": "Item or transaction description",
+      "quantity": "Quantity, or empty string if not applicable",
+      "unit_price": "Unit price, or empty string if not applicable",
       "total": "Line total as a number string"
     }
   ]
