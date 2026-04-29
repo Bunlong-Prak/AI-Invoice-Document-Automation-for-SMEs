@@ -173,121 +173,112 @@ export default function DashboardPage() {
   const estimatedSavings = stats ? stats.processedCount * 0.5 : 0; // $0.50 saved per document
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Real-time overview of your document automation
+          <h1 className="text-3xl font-bold tracking-tighter text-white">Dashboard</h1>
+          <p className="text-zinc-500 text-[11px] font-mono uppercase tracking-widest mt-1">
+            Real_time_extraction_metrics
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button
             variant="outline"
             size="sm"
             onClick={fetchData}
             disabled={loading}
+            className="border-white/10 hover:bg-white/5 text-xs font-semibold h-9"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
           <Button
             size="sm"
             onClick={handleExport}
             disabled={exporting}
-            className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
+            className="bg-white text-black hover:bg-zinc-200 text-xs font-bold h-9 px-5 rounded-full"
           >
             {exporting ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
             ) : (
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="w-3.5 h-3.5 mr-2" />
             )}
-            Export Data
+            Export CSV
           </Button>
         </div>
       </div>
 
       {/* Primary Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        <Card className="border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-3 opacity-10">
-            <TrendingUp className="w-12 h-12 text-emerald-500" />
-          </div>
-          <CardContent className="p-5">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Processed Docs</p>
-            <div className="flex items-baseline gap-2 mt-2">
-              <p className="text-3xl font-bold">{stats?.processedCount ?? "—"}</p>
-              <p className="text-xs text-emerald-500 font-medium">+100%</p>
+        <Card className="border-white/[0.05] bg-[#0a0a0a] rounded-xl overflow-hidden relative group">
+          <CardContent className="p-6">
+            <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Processed_Docs</p>
+            <div className="flex items-baseline gap-2 mt-4">
+              <p className="text-4xl font-bold font-mono tracking-tighter text-white">{stats?.processedCount ?? "—"}</p>
+              <p className="text-[10px] text-emerald-500 font-mono font-bold">+100%</p>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">Successfully structured data</p>
+            <div className="mt-4 h-[1px] bg-white/[0.05] w-full" />
+            <p className="text-[9px] font-mono text-zinc-700 mt-2 uppercase">Verified_system_output</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-3 opacity-10">
-            <Activity className="w-12 h-12 text-blue-500" />
-          </div>
-          <CardContent className="p-5">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Success Rate</p>
-            <div className="flex items-baseline gap-2 mt-2">
-              <p className="text-3xl font-bold">{stats ? `${successRate.toFixed(1)}%` : "—"}</p>
+        <Card className="border-white/[0.05] bg-[#0a0a0a] rounded-xl overflow-hidden relative group">
+          <CardContent className="p-6">
+            <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Success_Rate</p>
+            <div className="flex items-baseline gap-2 mt-4">
+              <p className="text-4xl font-bold font-mono tracking-tighter text-white">{stats ? `${successRate.toFixed(1)}%` : "—"}</p>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">OCR accuracy & processing</p>
+            <div className="mt-4 h-[1px] bg-white/[0.05] w-full" />
+            <p className="text-[9px] font-mono text-zinc-700 mt-2 uppercase">Llama_3.1_precision</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-3 opacity-10">
-            <DollarSign className="w-12 h-12 text-violet-500" />
-          </div>
-          <CardContent className="p-5">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Estimated ROI</p>
-            <div className="flex items-baseline gap-2 mt-2">
-              <p className="text-3xl font-bold text-violet-400">{formatCurrency(estimatedSavings)}</p>
+        <Card className="border-white/[0.05] bg-[#0a0a0a] rounded-xl overflow-hidden relative group">
+          <CardContent className="p-6">
+            <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Estimated_ROI</p>
+            <div className="flex items-baseline gap-2 mt-4">
+              <p className="text-4xl font-bold font-mono tracking-tighter text-violet-400">{formatCurrency(estimatedSavings)}</p>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">Labor costs saved (@$0.50/doc)</p>
+            <div className="mt-4 h-[1px] bg-white/[0.05] w-full" />
+            <p className="text-[9px] font-mono text-zinc-700 mt-2 uppercase">Calculated_labor_savings</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 bg-violet-600/5 backdrop-blur-sm border-violet-500/20 md:col-span-3 lg:col-span-1">
-          <CardContent className="p-5 space-y-3">
+        <Card className="border-violet-500/20 bg-[#0a0a0a] md:col-span-3 lg:col-span-1 border-l-2 border-l-violet-500 rounded-xl">
+          <CardContent className="p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plan Usage</p>
-              <Badge variant="outline" className="text-[10px] uppercase font-bold bg-violet-500/10 border-violet-500/20 text-violet-400">
+              <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Plan_Usage</p>
+              <Badge variant="outline" className="text-[9px] font-mono uppercase font-bold bg-violet-500/10 border-violet-500/20 text-violet-400 rounded-full px-2">
                 {data?.subscriptionTier || "Free"}
               </Badge>
             </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-muted-foreground">{usage?.used ?? 0} / {usage?.limit ?? 100} requests</span>
-                <span className="font-medium">{usage ? Math.round((usage.used / usage.limit) * 100) : 0}%</span>
+            <div className="space-y-2">
+              <div className="flex justify-between text-[11px] font-mono">
+                <span className="text-zinc-500">{usage?.used ?? 0} / {usage?.limit ?? 100} REQ</span>
+                <span className="text-white font-bold">{usage ? Math.round((usage.used / usage.limit) * 100) : 0}%</span>
               </div>
-              <Progress value={usage ? (usage.used / usage.limit) * 100 : 0} className="h-1.5">
+              <Progress value={usage ? (usage.used / usage.limit) * 100 : 0} className="h-1 bg-white/[0.05]">
                 <ProgressTrack>
                   <ProgressIndicator className={cn(
                     "transition-all",
                     usage && (usage.used / usage.limit) > 0.9 ? "bg-red-500" : 
-                    usage && (usage.used / usage.limit) > 0.7 ? "bg-amber-500" : "bg-violet-500"
+                    usage && (usage.used / usage.limit) > 0.7 ? "bg-amber-500" : "bg-violet-600"
                   )} />
                 </ProgressTrack>
               </Progress>
             </div>
-            <p className="text-[10px] text-muted-foreground leading-tight">
-              Monthly quota resets in {30 - new Date().getDate()} days. 
-              {usage?.remaining && usage.remaining < 10 && " Upgrade now to avoid interruption."}
-            </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Table Section */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-6">
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
               <Input
                 placeholder="Search vendor, invoice #..."
                 value={search}
@@ -295,7 +286,7 @@ export default function DashboardPage() {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                className="pl-9 bg-card/50"
+                className="pl-9 bg-white/[0.03] border-white/[0.05] text-xs h-10 rounded-lg placeholder:text-zinc-700"
               />
             </div>
             <Select
@@ -305,27 +296,27 @@ export default function DashboardPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[140px] bg-card/50">
-                <SelectValue placeholder="Status" />
+              <SelectTrigger className="w-[160px] bg-white/[0.03] border-white/[0.05] text-xs h-10 rounded-lg text-zinc-400">
+                <SelectValue placeholder="STATUS_FILTER" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="uploaded">Uploaded</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="processed">Processed</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
+              <SelectContent className="bg-zinc-900 border-white/10 text-xs font-mono">
+                <SelectItem value="all">ALL_STATUSES</SelectItem>
+                <SelectItem value="uploaded">UPLOADED</SelectItem>
+                <SelectItem value="processing">PROCESSING</SelectItem>
+                <SelectItem value="processed">PROCESSED</SelectItem>
+                <SelectItem value="error">ERROR</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <Card className="border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden">
+          <Card className="border-white/[0.05] bg-[#0a0a0a] rounded-xl overflow-hidden">
             <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent border-border/40">
+              <TableHeader className="bg-white/[0.02]">
+                <TableRow className="hover:bg-transparent border-white/[0.05]">
                   <TableHead className="w-10">
                     <input
                       type="checkbox"
-                      className="rounded accent-violet-500"
+                      className="rounded accent-violet-500 bg-black border-white/10"
                       checked={
                         data
                           ? data.documents.length > 0 &&
@@ -335,19 +326,19 @@ export default function DashboardPage() {
                       onChange={toggleAll}
                     />
                   </TableHead>
-                  <TableHead className="text-xs uppercase font-bold tracking-wider opacity-70">Vendor</TableHead>
-                  <TableHead className="text-xs uppercase font-bold tracking-wider opacity-70">Amount</TableHead>
-                  <TableHead className="text-xs uppercase font-bold tracking-wider opacity-70">Status</TableHead>
-                  <TableHead className="text-xs uppercase font-bold tracking-wider opacity-70 text-right">Actions</TableHead>
+                  <TableHead className="text-[10px] uppercase font-mono font-bold tracking-[0.1em] text-zinc-600">Vendor_Identity</TableHead>
+                  <TableHead className="text-[10px] uppercase font-mono font-bold tracking-[0.1em] text-zinc-600">Net_Amount</TableHead>
+                  <TableHead className="text-[10px] uppercase font-mono font-bold tracking-[0.1em] text-zinc-600">Engine_Status</TableHead>
+                  <TableHead className="text-[10px] uppercase font-mono font-bold tracking-[0.1em] text-zinc-600 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
+                    <TableRow key={i} className="border-white/[0.05]">
                       {Array.from({ length: 5 }).map((_, j) => (
                         <TableCell key={j}>
-                          <Skeleton className="h-5 w-full" />
+                          <Skeleton className="h-4 w-full bg-white/5" />
                         </TableCell>
                       ))}
                     </TableRow>
@@ -356,42 +347,47 @@ export default function DashboardPage() {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="text-center py-12 text-muted-foreground"
+                      className="text-center py-20 text-zinc-600"
                     >
-                      <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                      <p>No documents found</p>
+                      <FileText className="w-10 h-10 mx-auto mb-4 opacity-20" />
+                      <p className="text-xs font-mono uppercase tracking-widest">No_documents_detected</p>
                     </TableCell>
                   </TableRow>
                 ) : (
                   data?.documents.map((doc) => (
                     <TableRow
                       key={doc.id}
-                      className="cursor-pointer hover:bg-accent/50 border-border/30 transition-colors"
+                      className="cursor-pointer hover:bg-white/[0.02] border-white/[0.05] transition-colors"
                       onClick={() => router.push(`/invoices/${doc.id}`)}
                     >
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
-                          className="rounded accent-violet-500"
+                          className="rounded accent-violet-500 bg-black border-white/10"
                           checked={selectedIds.has(doc.id)}
                           onChange={() => toggleSelect(doc.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell>
                         <div className="flex flex-col">
-                          <span>{doc.vendorName || doc.originalName}</span>
-                          <span className="text-[10px] text-muted-foreground font-normal">
-                            {doc.invoiceNumber ? `INV: ${doc.invoiceNumber}` : formatDate(doc.uploadedAt)}
+                          <span className="text-xs font-bold text-white tracking-tight">{doc.vendorName || doc.originalName}</span>
+                          <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-tighter mt-0.5">
+                            {doc.invoiceNumber ? `ID: ${doc.invoiceNumber}` : formatDate(doc.uploadedAt)}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-mono text-xs text-zinc-300">
                         {formatCurrency(doc.totalAmount, doc.currency || "USD")}
                       </TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={`text-[10px] px-1.5 py-0 h-5 capitalize ${getStatusColor(doc.status)}`}
+                          className={cn(
+                            "text-[9px] font-mono px-2 py-0 h-5 uppercase rounded-full border-none",
+                            getStatusColor(doc.status).includes("emerald") ? "bg-emerald-500/10 text-emerald-400" :
+                            getStatusColor(doc.status).includes("amber") ? "bg-amber-500/10 text-amber-400" :
+                            "bg-zinc-800 text-zinc-400"
+                          )}
                         >
                           {doc.status}
                         </Badge>
@@ -400,7 +396,7 @@ export default function DashboardPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          className="h-8 w-8 text-zinc-700 hover:text-red-500 hover:bg-red-500/5 transition-all"
                           onClick={() => handleDelete(doc.id)}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -412,82 +408,55 @@ export default function DashboardPage() {
               </TableBody>
             </Table>
           </Card>
-
-          {/* Pagination */}
-          {data && data.total > data.limit && (
-            <div className="flex justify-center gap-2 mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="h-8 text-xs"
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => p + 1)}
-                disabled={page >= Math.ceil(data.total / data.limit)}
-                className="h-8 text-xs"
-              >
-                Next
-              </Button>
-            </div>
-          )}
         </div>
 
         {/* Sidebar Help/API Section */}
         <div className="space-y-6">
-          <Card className="border-border/40 bg-card/50 backdrop-blur-sm border-l-4 border-l-violet-500">
-            <CardHeader className="p-5">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Zap className="w-4 h-4 text-violet-500" />
-                Quick Integration
+          <Card className="border-white/[0.05] bg-[#0a0a0a] border-l-2 border-l-violet-500 rounded-xl">
+            <CardHeader className="p-6">
+              <CardTitle className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                <Zap className="w-3 h-3 text-violet-500" />
+                API_INTEGRATION
               </CardTitle>
-              <CardDescription className="text-xs">
-                Extract data via API in minutes.
-              </CardDescription>
             </CardHeader>
-            <CardContent className="p-5 pt-0 space-y-4">
-              <div className="p-3 bg-black rounded-lg font-mono text-[10px] text-zinc-400 overflow-x-auto">
+            <CardContent className="p-6 pt-0 space-y-5">
+              <div className="p-4 bg-black rounded border border-white/[0.05] font-mono text-[10px] text-zinc-400 leading-relaxed">
                 <span className="text-emerald-500">POST</span> /api/v1/extract<br />
-                <span className="text-zinc-600">Authorization: Bearer sk_...</span>
+                <span className="text-zinc-600">AUTH: Bearer sk_...</span>
               </div>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full text-xs h-8"
+                className="w-full text-[10px] font-mono uppercase tracking-widest h-9 border-white/10 hover:bg-white/5"
                 onClick={() => router.push("/settings/keys")}
               >
-                Get API Keys
+                Get_Production_Keys
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="p-5 pb-2">
-              <CardTitle className="text-sm">Global Reach</CardTitle>
+          <Card className="border-white/[0.05] bg-[#0a0a0a] rounded-xl">
+            <CardHeader className="p-6 pb-2">
+              <CardTitle className="text-[10px] font-mono uppercase tracking-widest text-zinc-500">Global_Support</CardTitle>
             </CardHeader>
-            <CardContent className="p-5 pt-0">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-violet-500/10 flex items-center justify-center shrink-0">
-                    <CheckCircle className="w-4 h-4 text-violet-500" />
+            <CardContent className="p-6 pt-2">
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 group">
+                  <div className="w-8 h-8 rounded bg-white/[0.03] border border-white/[0.05] flex items-center justify-center shrink-0 group-hover:border-violet-500/50 transition-colors">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
                   </div>
-                  <div className="text-xs">
-                    <p className="font-medium">Bakong Supported</p>
-                    <p className="text-muted-foreground text-[10px]">Full Khmer bank transfer support</p>
+                  <div>
+                    <p className="text-[11px] font-bold text-white tracking-tight">Bakong & KHR</p>
+                    <p className="text-[9px] font-mono text-zinc-600 uppercase tracking-tighter">Native_bank_transfers</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                    <CheckCircle className="w-4 h-4 text-blue-500" />
+                <div className="flex items-center gap-4 group">
+                  <div className="w-8 h-8 rounded bg-white/[0.03] border border-white/[0.05] flex items-center justify-center shrink-0 group-hover:border-violet-500/50 transition-colors">
+                    <CheckCircle className="w-3.5 h-3.5 text-blue-400" />
                   </div>
-                  <div className="text-xs">
-                    <p className="font-medium">Multi-Currency</p>
-                    <p className="text-muted-foreground text-[10px]">USD, EUR, KHR, GBP and more</p>
+                  <div>
+                    <p className="text-[11px] font-bold text-white tracking-tight">Multi-Currency</p>
+                    <p className="text-[9px] font-mono text-zinc-600 uppercase tracking-tighter">Global_tax_compliant</p>
                   </div>
                 </div>
               </div>

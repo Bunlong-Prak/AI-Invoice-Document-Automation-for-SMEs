@@ -11,7 +11,8 @@ import {
   ArrowRight, 
   Check, 
   Globe,
-  Terminal
+  Terminal,
+  UploadCloud
 } from "lucide-react";
 import { PricingCard } from "@/components/pricing-card";
 
@@ -54,112 +55,189 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white selection:bg-violet-500/30">
+    <div className="flex flex-col min-h-screen bg-black text-white selection:bg-violet-500/30 font-sans">
       {/* Header */}
-      <header className="px-6 h-20 flex items-center border-b border-white/5 sticky top-0 bg-black/50 backdrop-blur-xl z-50">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
+      <header className="px-8 h-20 flex items-center border-b border-white/[0.05] sticky top-0 bg-black/80 backdrop-blur-xl z-50">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-black" />
           </div>
-          <span className="font-bold text-xl tracking-tight">InvoiceAI</span>
+          <span className="font-bold text-xl tracking-tighter">InvoiceAI</span>
         </Link>
-        <nav className="ml-auto hidden md:flex gap-8 text-sm font-medium text-zinc-400">
+        <nav className="ml-12 hidden md:flex gap-8 text-[11px] font-mono uppercase tracking-widest text-zinc-500">
           <Link href="#features" className="hover:text-white transition-colors">Features</Link>
           <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
-          <Link href="#api" className="hover:text-white transition-colors">API Docs</Link>
-          <Link href="/playground" className="hover:text-white transition-colors text-violet-400">Playground</Link>
+          <Link href="#api" className="hover:text-white transition-colors">API</Link>
+          <Link href="/playground" className="text-violet-400 hover:text-violet-300 transition-colors tracking-[0.2em]">Playground</Link>
         </nav>
         <div className="ml-auto flex items-center gap-4">
           <Link href="/login">
-            <Button variant="ghost" className="text-zinc-400 hover:text-white">Sign In</Button>
+            <Button variant="ghost" className="text-zinc-500 hover:text-white text-xs font-semibold">Sign In</Button>
           </Link>
           <Link href="/login">
-            <Button className="bg-white text-black hover:bg-zinc-200 rounded-full px-6">Get Started</Button>
+            <Button className="bg-white text-black hover:bg-zinc-200 rounded-full px-6 h-10 text-xs font-bold transition-all hover:scale-[1.05]">
+              Get Started
+            </Button>
           </Link>
         </div>
       </header>
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="px-6 pt-24 pb-32 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-violet-600/20 blur-[120px] rounded-full -z-10 opacity-30"></div>
-          <div className="max-w-4xl mx-auto space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-violet-300">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
-              </span>
-              Now powered by Groq & Llama 3
+        <section className="px-6 pt-20 pb-32 border-b border-white/[0.05] relative overflow-hidden">
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-10 text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/10 text-[10px] font-mono uppercase tracking-[0.2em] text-violet-400">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-violet-500"></span>
+                </span>
+                Engine v4.2 // Llama 3.1
+              </div>
+              <h1 className="text-6xl md:text-8xl font-bold tracking-tighter text-white leading-[0.9]">
+                High-Fidelity <br /> Invoice <br /> Automation.
+              </h1>
+              <p className="text-xl text-zinc-500 max-w-lg leading-relaxed font-medium">
+                The world's fastest extraction API. <br />
+                Turn any document into structured <br />
+                JSON data in less than 2 seconds.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
+                <Link href="/playground">
+                  <Button size="lg" className="bg-white text-black hover:bg-zinc-200 rounded-full px-10 h-14 text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <Sparkles className="mr-2 w-4 h-4" />
+                    Try Playground
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button size="lg" variant="ghost" className="text-zinc-400 hover:text-white rounded-full px-8 h-14 text-base font-semibold">
+                    View API Docs
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-b from-white to-white/50 bg-clip-text text-transparent">
-              Automate Invoices with <br className="hidden md:block" /> AI-Powered Precision
-            </h1>
-            <p className="text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              The world's fastest invoice OCR and extraction API. Turn messy receipts and complex invoices into structured data in seconds.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Link href="/playground">
-                <Button size="lg" className="bg-white text-black hover:bg-zinc-200 rounded-full px-8 h-12 text-base">
-                  <Sparkles className="mr-2 w-4 h-4" />
-                  Try it Live — No Signup
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="border-white/10 hover:bg-white/5 rounded-full px-8 h-12 text-base">
-                  Get API Key
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
+
+            {/* Visual Side */}
+            <div className="relative group">
+              <div className="absolute inset-0 bg-violet-500/5 blur-[100px] rounded-full group-hover:bg-violet-500/10 transition-colors"></div>
+              <div className="relative rounded-2xl bg-[#0a0a0a] border border-white/10 p-2 shadow-2xl">
+                <div className="rounded-xl bg-black border border-white/[0.05] overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05] bg-white/[0.02]">
+                    <div className="flex gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10"></div>
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10"></div>
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10"></div>
+                    </div>
+                    <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Live Extraction Preview</div>
+                  </div>
+                  <div className="p-8 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Status</div>
+                        <div className="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                          READY_FOR_UPLOAD
+                        </div>
+                      </div>
+                      <div className="text-right space-y-1">
+                        <div className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Latency</div>
+                        <div className="text-xs font-mono text-white tracking-tighter">1.2s</div>
+                      </div>
+                    </div>
+                    
+                    <div className="rounded-xl border border-dashed border-white/10 p-12 flex flex-col items-center justify-center gap-4 bg-white/[0.01] group-hover:bg-white/[0.02] transition-colors">
+                      <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                        <UploadCloud className="w-5 h-5 text-zinc-500" />
+                      </div>
+                      <div className="text-xs font-mono text-zinc-500">DROP_INVOICE_HERE</div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/[0.05] grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Tokens_Used</div>
+                        <div className="text-xs font-mono text-zinc-400 italic">Calculating...</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Extraction_ID</div>
+                        <div className="text-xs font-mono text-zinc-400">INV-8829-PX</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Floating Badge */}
+              <div className="absolute -bottom-6 -right-6 p-4 rounded-2xl bg-zinc-900 border border-white/10 shadow-2xl hidden md:block">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                    <Check className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white tracking-tight">99.8% Accuracy</div>
+                    <div className="text-[10px] text-zinc-500 font-mono">VERIFIED_LLM_OUTPUT</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* Features Section */}
-        <section id="features" className="px-6 py-24 bg-white/[0.02] border-y border-white/5">
+        <section id="features" className="px-6 py-24 border-b border-white/[0.05]">
           <div className="max-w-6xl mx-auto">
             <div className="text-center space-y-4 mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold">Built for Modern Businesses</h2>
-              <p className="text-zinc-400">Everything you need to handle documents at scale.</p>
+              <h2 className="text-4xl font-bold tracking-tight">Precision Infrastructure</h2>
+              <p className="text-zinc-500 font-medium">Built for accuracy at massive scale.</p>
             </div>
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-6">
               {[
                 {
                   title: "Ultra-Fast OCR",
-                  description: "Powered by Docling and GPU-accelerated layout analysis for unmatched speed.",
-                  icon: Zap
+                  description: "GPU-accelerated layout analysis for matching speed with Llama 3.",
+                  icon: Zap,
+                  tag: "ENGINE"
                 },
                 {
                   title: "AI Structuring",
-                  description: "Advanced Llama 3 models extract line items, taxes, and vendor details with 99% accuracy.",
-                  icon: Sparkles
+                  description: "Complex line items and vendor details parsed into valid JSON.",
+                  icon: Sparkles,
+                  tag: "LOGIC"
                 },
                 {
                   title: "Developer First",
-                  description: "Simple REST API with multi-language support. Integrate in less than 5 minutes.",
-                  icon: Code
+                  description: "Stateless REST API with multi-language support. Deploy in minutes.",
+                  icon: Code,
+                  tag: "API"
                 },
                 {
-                  title: "Global Currency Support",
-                  description: "Handles USD, EUR, GBP, KHR and dozens of other global currencies out of the box.",
-                  icon: Globe
+                  title: "Global Reach",
+                  description: "Full currency support including USD, EUR, GBP, and KHR.",
+                  icon: Globe,
+                  tag: "CURRENCY"
                 },
                 {
                   title: "Usage Analytics",
-                  description: "Detailed breakdown of your API usage, status codes, and throughput in real-time.",
-                  icon: BarChart
+                  description: "Real-time metrics for throughput, latency, and success rates.",
+                  icon: BarChart,
+                  tag: "METRICS"
                 },
                 {
-                  title: "Enterprise Security",
-                  description: "Bank-grade encryption for all documents. GDPR and SOC2 ready architecture.",
-                  icon: Shield
+                  title: "SOC2 Compliance",
+                  description: "Bank-grade encryption and secure document lifecycle management.",
+                  icon: Shield,
+                  tag: "SECURITY"
                 }
               ].map((feature, i) => (
-                <div key={i} className="p-8 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-violet-500/30 transition-colors group">
-                  <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-6 group-hover:bg-violet-500/20 transition-colors">
-                    <feature.icon className="w-6 h-6 text-violet-400" />
+                <div key={i} className="p-8 rounded-xl bg-[#0a0a0a] border border-white/[0.05] hover:border-violet-500/50 transition-all group flex flex-col justify-between h-full">
+                  <div>
+                    <div className="flex items-center justify-between mb-8">
+                      <feature.icon className="w-5 h-5 text-violet-400" />
+                      <span className="text-[9px] font-mono tracking-widest text-zinc-600 group-hover:text-violet-500 transition-colors">{feature.tag}</span>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-3 tracking-tight">{feature.title}</h3>
+                    <p className="text-zinc-500 text-sm leading-relaxed">{feature.description}</p>
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                  <p className="text-zinc-400 leading-relaxed">{feature.description}</p>
                 </div>
               ))}
             </div>
@@ -167,77 +245,83 @@ export default async function Home() {
         </section>
 
         {/* API Preview Section */}
-        <section id="api" className="px-6 py-24">
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
-              <h2 className="text-4xl font-bold">The API Developers <br /> Love to Use</h2>
-              <p className="text-zinc-400 text-lg leading-relaxed">
-                No complex SDKs. No proprietary formats. Just a clean REST API that accepts your file and returns beautiful JSON.
+        <section id="api" className="px-6 py-32">
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-5 gap-16 items-start">
+            <div className="lg:col-span-2 space-y-8 sticky top-32">
+              <h2 className="text-5xl font-bold tracking-tighter leading-tight">Built for <br /> Developers.</h2>
+              <p className="text-zinc-500 text-lg leading-relaxed">
+                No complex SDKs. No proprietary formats. Just a clean REST API that accepts your file and returns beautiful, structured JSON.
               </p>
-              <ul className="space-y-4">
+              <ul className="space-y-5">
                 {[
                   "Single endpoint for all document types",
                   "Support for PDF, JPG, PNG, and BMP",
                   "Automated line item extraction",
-                  "Detailed usage metrics in headers"
+                  "Real-time usage metrics in headers"
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-violet-500/20 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-violet-400" />
+                  <li key={i} className="flex items-center gap-4 group">
+                    <div className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-violet-500/50 transition-colors">
+                      <Check className="w-3 h-3 text-emerald-400" />
                     </div>
-                    <span className="text-zinc-300">{item}</span>
+                    <span className="text-zinc-300 font-medium">{item}</span>
                   </li>
                 ))}
               </ul>
-              <Link href="/playground">
-                <Button size="lg" className="bg-violet-600 hover:bg-violet-500 text-white rounded-full px-8 h-12 text-base">
-                  <Sparkles className="mr-2 w-4 h-4" />
-                  Try it in the Playground
-                </Button>
-              </Link>
             </div>
-            <div className="rounded-2xl bg-zinc-900 border border-white/10 overflow-hidden shadow-2xl">
-              <div className="bg-zinc-800/50 px-4 py-3 flex gap-1.5 border-b border-white/5">
-                <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40"></div>
-                <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/40"></div>
-                <div className="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500/40"></div>
-              </div>
-              <div className="p-6 overflow-x-auto font-mono text-sm">
-                <div className="flex gap-4 mb-4">
-                  <span className="text-emerald-400">POST</span>
-                  <span className="text-zinc-400">/api/v1/extract</span>
+            
+            <div className="lg:col-span-3 space-y-6">
+              <div className="rounded-2xl bg-[#0a0a0a] border border-white/10 overflow-hidden shadow-2xl">
+                <div className="bg-white/[0.03] px-5 py-4 flex items-center justify-between border-b border-white/[0.05]">
+                  <div className="flex gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40"></div>
+                    <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/40"></div>
+                    <div className="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500/40"></div>
+                  </div>
+                  <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                    <Terminal className="w-3 h-3" />
+                    bash — extract.sh
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-zinc-500">// Resulting JSON</p>
-                  <pre className="text-violet-300">
+                <div className="p-8 overflow-x-auto font-mono text-[13px] leading-relaxed">
+                  <div className="flex gap-4 mb-6 items-center">
+                    <span className="text-emerald-400 font-bold">POST</span>
+                    <span className="text-zinc-400 tracking-tight">https://api.invoiceai.com/v1/extract</span>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="text-zinc-500 italic">// Request</div>
+                    <div className="p-4 rounded-lg bg-black border border-white/[0.05] text-violet-300">
+                      curl -X POST -H "Authorization: Bearer sk_live_..." \\ <br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-F "file=@invoice_001.pdf"
+                    </div>
+                    
+                    <div className="text-zinc-500 italic pt-4">// Response (200 OK)</div>
+                    <div className="p-4 rounded-lg bg-black border border-white/[0.05]">
+                      <pre className="text-emerald-400/90">
 {`{
-  "vendor_name": "Cambodia Beverage Company Ltd.",
-  "invoice_number": "290013578",
-  "date": "2024-01-27",
+  "vendor": "Cambodia Beverage Co.",
+  "invoice_id": "INV-290013",
+  "total": 2439.19,
   "currency": "USD",
-  "total_amount": "2439.19",
   "line_items": [
-    {
-      "description": "Coke Zero Sugar 330ml 24 Sleek CAN SPF",
-      "quantity": "39",
-      "unit_price": "8.60",
-      "total": "334.23"
-    },
-    {
-      "description": "Samurai Mix 330ml 24 Sleek CAN",
-      "quantity": "26",
-      "unit_price": "8.45",
-      "total": "218.92"
-    },
-    {
-      "description": "Samurai Strawberry 330ml 24 Sleek CAN",
-      "quantity": "70",
-      "unit_price": "5.10",
-      "total": "355.60"
-    }
+    { "desc": "Coke Zero 330ml", "qty": 39, "price": 8.60 }
   ]
 }`}
-                  </pre>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-6 rounded-2xl bg-[#0a0a0a] border border-white/10 space-y-2">
+                  <div className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Speed</div>
+                  <div className="text-2xl font-bold text-white tracking-tighter">120ms</div>
+                  <div className="text-[10px] text-zinc-500">AVG_PROCESSING_TIME</div>
+                </div>
+                <div className="p-6 rounded-2xl bg-[#0a0a0a] border border-white/10 space-y-2">
+                  <div className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Uptime</div>
+                  <div className="text-2xl font-bold text-white tracking-tighter">99.99%</div>
+                  <div className="text-[10px] text-zinc-500">SLA_GUARANTEED</div>
                 </div>
               </div>
             </div>
@@ -248,8 +332,8 @@ export default async function Home() {
         <section id="pricing" className="px-6 py-24 bg-white/[0.02]">
           <div className="max-w-6xl mx-auto">
             <div className="text-center space-y-4 mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold">Simple, Scalable Pricing</h2>
-              <p className="text-zinc-400">Start for free and scale as you grow.</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Simple, Precise Pricing</h2>
+              <p className="text-zinc-400">Scalable plans for businesses of all sizes.</p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
               {plans.map((plan, i) => (
@@ -279,18 +363,18 @@ export default async function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="px-6 py-12 border-t border-white/5">
-        <div className="max-w-6xl mx-auto flex flex-col md:row items-center justify-between gap-8">
-          <div className="flex flex-col items-center md:items-start gap-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
+      <footer className="px-8 py-16 border-t border-white/[0.05] bg-[#050505]">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
+          <div className="flex flex-col items-center md:items-start gap-6">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded bg-white flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-black" />
               </div>
-              <span className="font-bold text-lg tracking-tight text-white">InvoiceAI</span>
+              <span className="font-bold text-lg tracking-tighter text-white">InvoiceAI</span>
             </Link>
-            <p className="text-zinc-500 text-sm">© 2026 InvoiceAI Inc. All rights reserved.</p>
+            <p className="text-zinc-600 text-[10px] font-mono uppercase tracking-widest">© 2026 InvoiceAI Inc. // Precision_Automation_v4</p>
           </div>
-          <div className="flex gap-8 text-sm text-zinc-400">
+          <div className="flex gap-12 text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-500">
             <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="#" className="hover:text-white transition-colors">Terms</Link>
             <Link href="https://github.com" className="hover:text-white transition-colors flex items-center gap-2">

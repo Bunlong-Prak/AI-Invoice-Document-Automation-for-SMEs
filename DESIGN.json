@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-04-29T15:00:00Z",
+  "title": "Design System: InvoiceAI",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Deep Obsidian", "canonical": "oklch(0 0 0)", "tonalRamp": ["oklch(0.1 0 0)", "oklch(0.2 0 0)", "oklch(0.3 0 0)", "oklch(0.4 0 0)", "oklch(0.5 0 0)", "oklch(0.7 0 0)", "oklch(0.9 0 0)", "oklch(0.98 0 0)"] },
+      "accent": { "role": "accent", "displayName": "Llama Violet", "canonical": "oklch(60.6% 0.25 292.717)", "tonalRamp": ["oklch(20% 0.1 292)", "oklch(30% 0.15 292)", "oklch(40% 0.2 292)", "oklch(50% 0.23 292)", "oklch(60.6% 0.25 292)", "oklch(70% 0.18 292)", "oklch(85% 0.1 292)", "oklch(95% 0.05 292)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display Hero", "purpose": "Main headlines." },
+      "mono": { "displayName": "Technical Data", "purpose": "Extracted values and code." }
+    },
+    "shadows": [
+      { "name": "none", "value": "none", "purpose": "The system is flat-by-default." }
+    ],
+    "motion": [
+      { "name": "fast-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Snappy transitions for high-speed feel." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Precision Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action button with high-contrast state.",
+      "html": "<button class=\"ds-btn-precision\">EXTRACT DATA</button>",
+      "css": ".ds-btn-precision { background: #fbfbfb; color: #000; padding: 12px 28px; border-radius: 16px; font-family: sans-serif; font-weight: 600; font-size: 14px; border: none; cursor: pointer; transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s; } .ds-btn-precision:hover { background: #fff; transform: scale(1.02); } .ds-btn-precision:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Data Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Container for extracted invoice data.",
+      "html": "<div class=\"ds-card-precision\"><div class=\"ds-card-label\">TOTAL_AMOUNT</div><div class=\"ds-card-value\">$2,439.19</div></div>",
+      "css": ".ds-card-precision { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 20px; width: 200px; } .ds-card-label { color: rgba(255, 255, 255, 0.5); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 8px; font-family: sans-serif; } .ds-card-value { color: #fbfbfb; font-family: monospace; font-size: 18px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Precision Deck",
+    "overview": "InvoiceAI is a system built on functional minimalism and technical accuracy. It rejects the 'bubbly' SaaS aesthetic in favor of sharp lines, high-density data views, and monospaced accents that signal its AI-powered precision.",
+    "keyCharacteristics": ["High-contrast, dark-mode default", "Technical monospace typography", "Tonal depth", "Ultra-sharp borders"],
+    "rules": [
+      { "name": "The Rarity Rule", "body": "The Llama Violet accent must occupy ≤5% of any given screen.", "section": "colors" },
+      { "name": "The Monospace Anchor", "body": "Any value that is extracted by AI or part of a data table MUST use the monospaced font family.", "section": "typography" }
+    ],
+    "dos": ["Do use absolute black (#000000) for the main background", "Do use Geist Mono for all numerical data"],
+    "donts": ["Don't use generic SaaS purple-indigo gradients", "Don't use soft, large shadows"]
+  }
+}

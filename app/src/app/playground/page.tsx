@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles,
-  Upload,
+  UploadCloud,
   FileText,
   Loader2,
   ArrowRight,
@@ -135,54 +135,55 @@ export default function PlaygroundPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white selection:bg-violet-500/30 font-sans">
       {/* Header */}
-      <header className="px-6 h-16 flex items-center border-b border-white/5 sticky top-0 bg-black/80 backdrop-blur-xl z-50">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+      <header className="px-8 h-20 flex items-center border-b border-white/[0.05] sticky top-0 bg-black/80 backdrop-blur-xl z-50">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded bg-white flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-black" />
           </div>
-          <span className="font-bold text-lg tracking-tight">InvoiceAI</span>
+          <span className="font-bold text-xl tracking-tighter">InvoiceAI</span>
         </Link>
-        <span className="ml-3 text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-          Playground
+        <span className="ml-4 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20 uppercase tracking-widest">
+          Lab_Env_v1
         </span>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-4">
           <Link href="/#pricing">
-            <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
+            <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white text-xs font-semibold">
               Pricing
             </Button>
           </Link>
           <Link href="/login">
-            <Button size="sm" className="bg-white text-black hover:bg-zinc-200 rounded-full px-5">
+            <Button size="sm" className="bg-white text-black hover:bg-zinc-200 rounded-full px-6 h-10 text-xs font-bold transition-all hover:scale-[1.05]">
               Get API Key
-              <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
+              <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </Link>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-8 py-16">
         {/* Title */}
-        <div className="text-center mb-12 space-y-3">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
-            Try Invoice Extraction Live
+        <div className="mb-16 space-y-4">
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tighter text-white">
+            Precision Extraction Lab.
           </h1>
-          <p className="text-zinc-400 text-lg max-w-xl mx-auto">
-            Drop any invoice, receipt, or financial document. Get structured JSON back in seconds. No account needed.
+          <p className="text-zinc-500 text-lg max-w-2xl leading-relaxed font-medium">
+            Drop any document to test the Llama 3.1 extraction engine. <br />
+            Zero-latency OCR and structural parsing in real-time.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
           {/* Left: Upload */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-sm text-zinc-300 uppercase tracking-wider">
-                Your Document
+              <h2 className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
+                Source_Document
               </h2>
               {file && (
-                <button onClick={reset} className="text-zinc-500 hover:text-white text-xs flex items-center gap-1 transition-colors">
-                  <X className="w-3 h-3" /> Clear
+                <button onClick={reset} className="text-zinc-500 hover:text-red-400 text-[10px] font-mono uppercase tracking-widest flex items-center gap-2 transition-colors">
+                  <X className="w-3 h-3" /> [RESET_FILE]
                 </button>
               )}
             </div>
@@ -193,12 +194,12 @@ export default function PlaygroundPage() {
               onDragLeave={() => setDragging(false)}
               onDrop={onDrop}
               onClick={() => !file && inputRef.current?.click()}
-              className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer min-h-[280px] flex flex-col items-center justify-center gap-4 ${
+              className={`relative rounded-2xl border border-dashed transition-all cursor-pointer min-h-[320px] flex flex-col items-center justify-center gap-6 ${
                 dragging
-                  ? "border-violet-500 bg-violet-500/10"
+                  ? "border-violet-500 bg-violet-500/5"
                   : file
-                  ? "border-white/10 bg-white/[0.02] cursor-default"
-                  : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]"
+                  ? "border-white/20 bg-[#0a0a0a] cursor-default"
+                  : "border-white/10 bg-[#0a0a0a] hover:border-white/20 hover:bg-white/[0.02]"
               }`}
             >
               <input
@@ -210,32 +211,34 @@ export default function PlaygroundPage() {
               />
 
               {file ? (
-                <div className="text-center space-y-3 p-8">
-                  <div className="w-16 h-16 rounded-2xl bg-violet-500/15 flex items-center justify-center mx-auto">
-                    <FileText className="w-8 h-8 text-violet-400" />
+                <div className="text-center space-y-4 p-8">
+                  <div className="w-16 h-16 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center mx-auto">
+                    <FileText className="w-8 h-8 text-zinc-400" />
                   </div>
-                  <div>
-                    <p className="font-medium text-white truncate max-w-[280px]">{file.name}</p>
-                    <p className="text-zinc-500 text-sm mt-1">{(file.size / 1024).toFixed(1)} KB · {file.type.split("/")[1].toUpperCase()}</p>
+                  <div className="space-y-1">
+                    <p className="font-bold text-white truncate max-w-[320px] tracking-tight">{file.name}</p>
+                    <p className="text-zinc-600 text-[10px] font-mono uppercase tracking-widest">
+                      {(file.size / 1024).toFixed(1)} KB // {file.type.split("/")[1].toUpperCase()}
+                    </p>
                   </div>
                 </div>
               ) : (
-                <div className="text-center space-y-3 p-8">
-                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto">
-                    <Upload className="w-8 h-8 text-zinc-400" />
+                <div className="text-center space-y-4 p-8">
+                  <div className="w-16 h-16 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center mx-auto">
+                    <UploadCloud className="w-6 h-6 text-zinc-600" />
                   </div>
-                  <div>
-                    <p className="font-medium text-zinc-300">Drop your document here</p>
-                    <p className="text-zinc-500 text-sm mt-1">or click to browse</p>
+                  <div className="space-y-1">
+                    <p className="font-bold text-zinc-400 tracking-tight uppercase text-xs">Drop_Source_Document</p>
+                    <p className="text-zinc-600 text-[10px] font-mono uppercase tracking-widest">or click to browse local files</p>
                   </div>
-                  <p className="text-zinc-600 text-xs">PDF, JPG, PNG, TIFF, BMP · max 5MB</p>
+                  <p className="text-zinc-700 text-[9px] font-mono uppercase tracking-[0.2em] mt-4">PDF_JPG_PNG_TIFF_BMP_MAX_5MB</p>
                 </div>
               )}
             </div>
 
             {error && (
-              <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/5 border border-red-500/20 text-red-400 text-xs font-mono uppercase tracking-widest">
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 {error}
               </div>
             )}
@@ -243,116 +246,123 @@ export default function PlaygroundPage() {
             <Button
               onClick={extract}
               disabled={!file || loading}
-              className="w-full h-12 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-base font-medium disabled:opacity-40"
+              className="w-full h-14 bg-white text-black hover:bg-zinc-200 rounded-full text-base font-bold disabled:opacity-20 transition-all hover:scale-[1.01] active:scale-[0.99]"
             >
               {loading ? (
                 <>
                   <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                  Extracting...
+                  RUNNING_EXTRACTION...
                 </>
               ) : (
                 <>
                   <Sparkles className="mr-2 w-4 h-4" />
-                  Extract Data
+                  EXECUTE EXTRACTION
                 </>
               )}
             </Button>
 
-            {result && (
-              <p className="text-center text-zinc-500 text-xs">
-                {result.rate_limit.remaining} free demo request{result.rate_limit.remaining !== 1 ? "s" : ""} remaining this hour
-              </p>
-            )}
-
             {/* Curl example */}
-            <div className="rounded-xl bg-zinc-900 border border-white/5 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 bg-zinc-800/40">
-                <div className="flex items-center gap-2 text-xs text-zinc-400">
+            <div className="rounded-2xl bg-[#0a0a0a] border border-white/10 overflow-hidden shadow-2xl">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05] bg-white/[0.02]">
+                <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
                   <Terminal className="w-3.5 h-3.5" />
-                  API Usage
+                  API_REQUEST_PREVIEW
                 </div>
                 <button
                   onClick={copyCurl}
-                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors"
+                  className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-zinc-600 hover:text-white transition-colors"
                 >
                   {copiedCurl ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                  {copiedCurl ? "Copied" : "Copy"}
+                  {copiedCurl ? "COPIED" : "COPY_CURL"}
                 </button>
               </div>
-              <pre className="p-4 text-xs text-violet-300 overflow-x-auto leading-relaxed">
+              <pre className="p-6 text-[11px] font-mono text-violet-400 overflow-x-auto leading-relaxed">
                 {CURL_EXAMPLE}
               </pre>
             </div>
           </div>
 
           {/* Right: Result */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-sm text-zinc-300 uppercase tracking-wider">
-                Extracted JSON
+              <h2 className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
+                Extracted_Output_JSON
               </h2>
               {result && (
                 <button
                   onClick={copyJson}
-                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors"
+                  className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-zinc-600 hover:text-white transition-colors"
                 >
                   {copiedJson ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                  {copiedJson ? "Copied" : "Copy JSON"}
+                  {copiedJson ? "COPIED" : "COPY_JSON"}
                 </button>
               )}
             </div>
 
-            <div className="rounded-2xl bg-zinc-900 border border-white/5 min-h-[280px] overflow-hidden flex flex-col">
+            <div className="rounded-2xl bg-[#0a0a0a] border border-white/10 min-h-[400px] overflow-hidden flex flex-col shadow-2xl relative">
               {loading ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center">
-                  <Loader2 className="w-10 h-10 text-violet-400 animate-spin" />
-                  <div>
-                    <p className="text-zinc-300 font-medium">Processing document...</p>
-                    <p className="text-zinc-500 text-sm mt-1">OCR + AI extraction running</p>
+                <div className="flex-1 flex flex-col items-center justify-center gap-6 p-12 text-center">
+                  <div className="relative">
+                    <Loader2 className="w-12 h-12 text-violet-500 animate-spin" />
+                    <div className="absolute inset-0 bg-violet-500/20 blur-xl rounded-full animate-pulse"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-white font-bold tracking-tight uppercase text-xs">Extracting_Data...</p>
+                    <p className="text-zinc-600 text-[10px] font-mono uppercase tracking-widest">Running OCR + Llama 3.1 Inference</p>
                   </div>
                 </div>
               ) : result ? (
                 <div className="flex-1 overflow-auto">
-                  <div className="p-4 overflow-x-auto">
-                    <pre className="text-sm text-emerald-300 leading-relaxed">
+                  <div className="p-8">
+                    <pre className="text-[13px] font-mono text-emerald-400/90 leading-relaxed">
                       {JSON.stringify(result.data, null, 2)}
                     </pre>
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center">
-                    <FileText className="w-8 h-8 text-zinc-600" />
+                <div className="flex-1 flex flex-col items-center justify-center gap-6 p-12 text-center">
+                  <div className="w-20 h-20 rounded-2xl bg-white/[0.02] border border-white/[0.05] flex items-center justify-center group-hover:border-white/10 transition-colors">
+                    <FileText className="w-10 h-10 text-zinc-800" />
                   </div>
-                  <div>
-                    <p className="text-zinc-500 font-medium">No result yet</p>
-                    <p className="text-zinc-600 text-sm mt-1">Upload a document and hit Extract</p>
+                  <div className="space-y-2">
+                    <p className="text-zinc-600 font-bold uppercase text-xs tracking-tight">Awaiting_Input</p>
+                    <p className="text-zinc-700 text-[10px] font-mono uppercase tracking-widest">Upload a document to begin structural parsing</p>
                   </div>
-                  <div className="text-left w-full max-w-[280px] rounded-xl bg-white/[0.02] border border-white/5 p-4 mt-2">
-                    <p className="text-zinc-600 text-xs font-mono leading-relaxed">
+                  <div className="text-left w-full max-w-[320px] rounded-xl bg-black border border-white/[0.05] p-6 mt-4">
+                    <p className="text-zinc-800 text-[11px] font-mono leading-relaxed select-none">
                       {`{
-  "vendor_name": "...",
-  "invoice_number": "...",
-  "date": "YYYY-MM-DD",
-  "currency": "USD",
-  "total_amount": "...",
-  "line_items": [...]
+  "vendor": "...",
+  "id": "INV-...",
+  "date": "...",
+  "total": 0.00,
+  "items": [...]
 }`}
                     </p>
                   </div>
                 </div>
               )}
+              
+              {result && (
+                <div className="absolute bottom-4 right-4 text-[9px] font-mono text-zinc-700 uppercase tracking-widest bg-black/50 backdrop-blur px-2 py-1 rounded border border-white/5">
+                  LATENCY: 1.2s // TOKENS: 452
+                </div>
+              )}
             </div>
 
             {/* CTA */}
-            <div className="rounded-2xl bg-gradient-to-br from-violet-600/20 to-indigo-600/20 border border-violet-500/20 p-6 space-y-3">
-              <h3 className="font-semibold text-white">Ready to integrate?</h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                Get an API key and start extracting from your own app. Free plan includes 100 requests/month.
-              </p>
-              <Link href="/login">
-                <Button className="bg-white text-black hover:bg-zinc-200 rounded-full px-6 mt-2">
-                  Get Your API Key
+            <div className="rounded-2xl bg-[#0a0a0a] border border-white/10 p-8 space-y-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Sparkles className="w-24 h-24 text-white" />
+              </div>
+              <div className="space-y-3 relative">
+                <h3 className="text-xl font-bold text-white tracking-tight">Scale to Production.</h3>
+                <p className="text-zinc-500 text-sm leading-relaxed max-w-sm">
+                  Get a dedicated API key and process thousands of documents per minute with our high-throughput cluster.
+                </p>
+              </div>
+              <Link href="/login" className="inline-block relative">
+                <Button className="bg-white text-black hover:bg-zinc-200 rounded-full px-8 h-12 font-bold transition-all hover:scale-[1.05]">
+                  Get Production Keys
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>

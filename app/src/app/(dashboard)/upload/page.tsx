@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import {
-  Upload,
+  UploadCloud,
   FileText,
   X,
   Loader2,
@@ -246,7 +246,7 @@ export default function UploadPage() {
                   onClick={uploadAndProcess}
                   className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
+                  <UploadCloud className="w-4 h-4 mr-2" />
                   Upload & Process ({pendingCount})
                 </Button>
               )}

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard,
-  Upload,
+  UploadCloud,
   FileText,
   LogOut,
   ChevronLeft,
@@ -28,7 +28,7 @@ const navItems = [
   {
     label: "Upload",
     href: "/upload",
-    icon: Upload,
+    icon: UploadCloud,
   },
   {
     label: "API Keys",
@@ -45,42 +45,43 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-300",
+        "flex flex-col border-r border-white/[0.05] bg-black transition-all duration-300",
         collapsed ? "w-[68px]" : "w-[260px]"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 p-4 h-16">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 shrink-0">
-          <Sparkles className="w-5 h-5 text-white" />
+      <div className="flex items-center gap-3 p-6 h-20">
+        <div className="flex items-center justify-center w-8 h-8 rounded bg-white shrink-0">
+          <Sparkles className="w-5 h-5 text-black" />
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="font-bold text-sm tracking-tight">InvoiceAI</span>
-            <span className="text-[10px] text-muted-foreground">
-              Document Automation
+            <span className="font-bold text-sm tracking-tighter text-white uppercase">InvoiceAI</span>
+            <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest">
+              Automated_v4.2
             </span>
           </div>
         )}
       </div>
 
-      <Separator className="opacity-50" />
-
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 px-4 space-y-1 mt-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link key={item.href} href={item.href}>
               <div
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                  "relative flex items-center gap-3 px-3 py-2.5 rounded text-xs font-mono uppercase tracking-widest transition-all group",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                    ? "text-white"
+                    : "text-zinc-500 hover:text-white hover:bg-white/[0.03]"
                 )}
               >
-                <item.icon className="w-4 h-4 shrink-0" />
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 bg-violet-500 rounded-full" />
+                )}
+                <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-violet-400" : "text-zinc-600 group-hover:text-zinc-400")} />
                 {!collapsed && <span>{item.label}</span>}
               </div>
             </Link>
@@ -89,12 +90,12 @@ export function Sidebar() {
       </nav>
 
       {/* Collapse toggle */}
-      <div className="px-3 pb-2">
+      <div className="px-4 pb-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full justify-center"
+          className="w-full justify-center text-zinc-600 hover:text-white hover:bg-white/[0.03]"
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
@@ -104,28 +105,28 @@ export function Sidebar() {
         </Button>
       </div>
 
-      <Separator className="opacity-50" />
+      <div className="h-px bg-white/[0.05] mx-4" />
 
       {/* User */}
-      <div className="p-3">
+      <div className="p-4 mb-2">
         <div
           className={cn(
-            "flex items-center gap-3",
+            "flex items-center gap-3 p-2 rounded hover:bg-white/[0.03] transition-colors",
             collapsed ? "justify-center" : ""
           )}
         >
-          <Avatar className="w-8 h-8 shrink-0">
-            <AvatarImage src={session?.user?.image || ""} />
-            <AvatarFallback className="text-xs bg-gradient-to-br from-violet-500 to-indigo-600 text-white">
+          <Avatar className="w-8 h-8 shrink-0 rounded border border-white/10">
+            <AvatarImage src={session?.user?.image || ""} className="rounded" />
+            <AvatarFallback className="text-[10px] bg-zinc-800 text-white font-mono rounded">
               {session?.user?.name?.charAt(0) || "U"}
             </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">
+              <p className="text-[11px] font-bold text-white truncate tracking-tight">
                 {session?.user?.name || "User"}
               </p>
-              <p className="text-[10px] text-muted-foreground truncate">
+              <p className="text-[9px] font-mono text-zinc-600 truncate uppercase tracking-tighter">
                 {session?.user?.email}
               </p>
             </div>
@@ -134,10 +135,10 @@ export function Sidebar() {
             <Button
               variant="ghost"
               size="icon"
-              className="shrink-0 h-8 w-8"
+              className="shrink-0 h-8 w-8 text-zinc-600 hover:text-destructive hover:bg-destructive/5"
               onClick={() => signOut()}
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
             </Button>
           )}
         </div>

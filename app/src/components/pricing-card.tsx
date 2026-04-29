@@ -56,27 +56,27 @@ export function PricingCard({ plan, isLoggedIn }: PricingCardProps) {
   };
 
   return (
-    <Card className={`bg-white/[0.03] border-white/10 text-white relative flex flex-col ${
-      plan.popular ? "border-violet-500 shadow-[0_0_40px_-10px_rgba(139,92,246,0.3)]" : ""
+    <Card className={`bg-[#0a0a0a] border-white/[0.05] text-white relative flex flex-col transition-all hover:border-white/10 overflow-visible ${
+      plan.popular ? "border-violet-500/50 ring-1 ring-violet-500/20" : ""
     }`}>
       {plan.popular && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-violet-500 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
-          Most Popular
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-[10px] font-mono font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-violet-400/30 shadow-[0_0_20px_rgba(139,92,246,0.3)] z-10">
+          Optimal Choice
         </div>
       )}
       <CardHeader>
-        <CardTitle className="text-xl">{plan.name}</CardTitle>
+        <CardTitle className="text-xl tracking-tight font-semibold">{plan.name}</CardTitle>
         <div className="flex items-baseline gap-1 mt-2">
-          <span className="text-4xl font-bold">{plan.price}</span>
-          <span className="text-zinc-400">/month</span>
+          <span className="text-4xl font-bold font-mono tracking-tighter">{plan.price}</span>
+          <span className="text-zinc-500 text-sm font-medium">/month</span>
         </div>
-        <CardDescription className="text-zinc-400 pt-2">{plan.description}</CardDescription>
+        <CardDescription className="text-zinc-500 pt-2 text-sm leading-relaxed">{plan.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 flex-1 flex flex-col justify-between">
         <ul className="space-y-3">
           {plan.features.map((feature, j) => (
-            <li key={j} className="flex items-center gap-2 text-sm text-zinc-300">
-              <Check className="w-4 h-4 text-violet-400" />
+            <li key={j} className="flex items-center gap-2 text-sm text-zinc-400">
+              <Check className="w-3.5 h-3.5 text-emerald-500/80" />
               {feature}
             </li>
           ))}
@@ -84,8 +84,10 @@ export function PricingCard({ plan, isLoggedIn }: PricingCardProps) {
         <Button 
           onClick={handleCheckout}
           disabled={isLoading}
-          className={`w-full rounded-full h-11 mt-6 ${
-            plan.popular ? "bg-violet-600 hover:bg-violet-700 text-white" : "bg-white text-black hover:bg-zinc-200"
+          className={`w-full rounded-full h-11 mt-6 font-semibold transition-all ${
+            plan.popular 
+              ? "bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-900/20" 
+              : "bg-white text-black hover:bg-zinc-200"
           }`}
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : plan.cta}
