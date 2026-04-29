@@ -4,7 +4,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { authConfig } from "./auth.config";
 
-export const { handlers, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   callbacks: {
     async signIn({ user }) {
@@ -40,15 +40,5 @@ export const { handlers, signIn, signOut } = NextAuth({
       }
       return session;
     },
-  },
-});
-
-// Bypass authentication with a mock local user
-export const auth = async () => ({
-  user: {
-    id: "00000000-0000-0000-0000-000000000000",
-    name: "Local Offline User",
-    email: "local@example.com",
-    image: "",
   },
 });
