@@ -67,6 +67,7 @@ export default async function Home() {
           <Link href="#features" className="hover:text-white transition-colors">Features</Link>
           <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
           <Link href="#api" className="hover:text-white transition-colors">API Docs</Link>
+          <Link href="/playground" className="hover:text-white transition-colors text-violet-400">Playground</Link>
         </nav>
         <div className="ml-auto flex items-center gap-4">
           <Link href="/login">
@@ -97,16 +98,16 @@ export default async function Home() {
               The world's fastest invoice OCR and extraction API. Turn messy receipts and complex invoices into structured data in seconds.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Link href="/login">
+              <Link href="/playground">
                 <Button size="lg" className="bg-white text-black hover:bg-zinc-200 rounded-full px-8 h-12 text-base">
-                  Start Extracting for Free
-                  <ArrowRight className="ml-2 w-4 h-4" />
+                  <Sparkles className="mr-2 w-4 h-4" />
+                  Try it Live — No Signup
                 </Button>
               </Link>
-              <Link href="#api">
+              <Link href="/login">
                 <Button size="lg" variant="outline" className="border-white/10 hover:bg-white/5 rounded-full px-8 h-12 text-base">
-                  <Terminal className="mr-2 w-4 h-4" />
-                  View API Docs
+                  Get API Key
+                  <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>
             </div>
@@ -188,6 +189,12 @@ export default async function Home() {
                   </li>
                 ))}
               </ul>
+              <Link href="/playground">
+                <Button size="lg" className="bg-violet-600 hover:bg-violet-500 text-white rounded-full px-8 h-12 text-base">
+                  <Sparkles className="mr-2 w-4 h-4" />
+                  Try it in the Playground
+                </Button>
+              </Link>
             </div>
             <div className="rounded-2xl bg-zinc-900 border border-white/10 overflow-hidden shadow-2xl">
               <div className="bg-zinc-800/50 px-4 py-3 flex gap-1.5 border-b border-white/5">
