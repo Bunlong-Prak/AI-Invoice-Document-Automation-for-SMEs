@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveFile, deleteFile } from "@/lib/storage";
 import { extractTextFromFile } from "@/lib/ocr";
-import { extractInvoiceData } from "@/lib/ai-extract";
+import { extractInvoiceData, extractInvoiceDataFromImage } from "@/lib/ai-extract";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB for demo
 const ALLOWED_TYPES = [
@@ -10,6 +10,13 @@ const ALLOWED_TYPES = [
   "image/tiff",
   "image/bmp",
   "application/pdf",
+];
+
+const IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/tiff",
+  "image/bmp",
 ];
 
 // In-memory rate limiter: IP -> { count, resetAt }
@@ -81,16 +88,24 @@ export async function POST(request: NextRequest) {
     filePath = saved.filePath;
     filename = saved.filename;
 
-    const rawText = await extractTextFromFile(filePath, file.type);
+    let invoiceData;
 
-    if (!rawText || rawText.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Could not extract text from document. Try a clearer image." },
-        { status: 422 }
-      );
+    if (IMAGE_TYPES.includes(file.type)) {
+      // Vision-based extraction for images
+      invoiceData = await extractInvoiceDataFromImage(filePath, file.type);
+    } else {
+      // OCR-based extraction for PDFs
+      const rawText = await extractTextFromFile(filePath, file.type);
+
+      if (!rawText || rawText.trim().length === 0) {
+        return NextResponse.json(
+          { error: "Could not extract text from document. Try a clearer image or a different file." },
+          { status: 422 }
+        );
+      }
+
+      invoiceData = await extractInvoiceData(rawText);
     }
-
-    const invoiceData = await extractInvoiceData(rawText);
 
     return NextResponse.json(
       {

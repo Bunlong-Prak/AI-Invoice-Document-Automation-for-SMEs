@@ -1,10 +1,11 @@
 import OpenAI from "openai";
 import { z } from "zod";
+import fs from "fs";
 import type { ExtractedInvoiceData } from "@/types";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1", // Use Groq's free API
+  baseURL: "https://api.groq.com/openai/v1",
 });
 
 const LineItemSchema = z.object({
@@ -24,52 +25,131 @@ const InvoiceSchema = z.object({
   line_items: z.array(LineItemSchema).default([]),
 });
 
-const EXTRACTION_PROMPT = `You are an expert financial document data extraction system. Your job is to extract structured data from OCR text of ANY financial document — invoices, receipts, payment confirmations, bank transfers, transaction slips, purchase orders, or bills.
-
-RULES:
-1. Extract ALL available information from the text regardless of document type
-2. If a field is not found or unclear, use an empty string ""
-3. For amounts, extract the POSITIVE number only (no currency symbols, no minus sign). Use "." as decimal separator
-4. For date, use ISO format YYYY-MM-DD when possible. Convert "Mar 31, 2026" → "2026-03-31"
-5. Currency should be a 3-letter code (USD, EUR, GBP, KHR, etc.)
-6. Extract ALL line items or transaction details you can identify
-7. Your response MUST be valid JSON only — no markdown, no explanation, no extra text
-8. Be tolerant of OCR errors, messy formatting, and unusual layouts
-
-FIELD MAPPING for different document types:
-- "vendor_name": seller, recipient, payee, merchant, vendor, company name, or "To:" field
-- "invoice_number": invoice #, receipt #, transaction ID, Trx. ID, reference #, order #, or any unique document identifier
-- "date": invoice date, transaction date, receipt date, payment date
-- "total_amount": total, amount, grand total, original amount (always positive)
-- "tax_amount": tax, VAT, GST amount if present
-
-Extract this structure:
-{
-  "vendor_name": "Seller/recipient/payee name",
-  "invoice_number": "Any unique document or transaction identifier",
+const EXTRACTION_SCHEMA_DESCRIPTION = `{
+  "vendor_name": "Company/seller name",
+  "invoice_number": "Invoice #, receipt #, transaction ID, or any unique document identifier",
   "date": "Document date in YYYY-MM-DD format",
-  "currency": "3-letter currency code",
-  "total_amount": "Total amount as a positive number string",
-  "tax_amount": "Tax amount as a number string, or empty string",
+  "currency": "3-letter currency code (USD, EUR, KHR, etc.)",
+  "total_amount": "Grand total as positive number string (no symbols)",
+  "tax_amount": "Tax/VAT amount as number string, or empty string",
   "line_items": [
     {
-      "description": "Item or transaction description",
-      "quantity": "Quantity, or empty string if not applicable",
-      "unit_price": "Unit price, or empty string if not applicable",
-      "total": "Line total as a number string"
+      "description": "Product or service description",
+      "quantity": "Quantity as string, or empty string",
+      "unit_price": "Unit price as number string, or empty string",
+      "total": "Line total as number string"
     }
   ]
-}
+}`;
+
+const VISION_PROMPT = `You are an expert financial document extraction system. Extract ALL data from this invoice/receipt image.
+
+RULES:
+- Extract every field you can see, even if text is partially in another language
+- Amounts: positive numbers only, use "." as decimal separator, no currency symbols
+- Dates: convert to YYYY-MM-DD format
+- Currency: 3-letter ISO code (USD, EUR, KHR, GBP, etc.)
+- invoice_number: use ANY unique identifier you see (invoice #, receipt #, order #, transaction ID)
+- If a field is not visible, use empty string ""
+- Extract ALL line items from the table
+- Respond ONLY with valid JSON, no markdown, no explanation
+
+Output this exact JSON structure:
+${EXTRACTION_SCHEMA_DESCRIPTION}`;
+
+const TEXT_EXTRACTION_PROMPT = `You are an expert financial document data extraction system. Extract structured data from this OCR text of a financial document.
+
+RULES:
+1. Extract ALL available information regardless of document type
+2. If a field is not found, use empty string ""
+3. Amounts: positive numbers only, "." as decimal separator, no currency symbols
+4. Dates: YYYY-MM-DD format
+5. Currency: 3-letter ISO code
+6. Extract ALL line items
+7. Respond ONLY with valid JSON, no markdown, no explanation
+
+Output this exact JSON structure:
+${EXTRACTION_SCHEMA_DESCRIPTION}
 
 OCR TEXT:
 `;
 
+function emptyResult(): ExtractedInvoiceData {
+  return {
+    vendor_name: "",
+    invoice_number: "",
+    date: "",
+    currency: "USD",
+    total_amount: "",
+    tax_amount: "",
+    line_items: [],
+  };
+}
+
+/**
+ * Vision-based extraction for image files (JPG, PNG, TIFF, BMP).
+ * Sends image directly to Llama 4 Scout on Groq — no OCR step needed.
+ */
+export async function extractInvoiceDataFromImage(
+  filePath: string,
+  mimeType: string
+): Promise<ExtractedInvoiceData> {
+  try {
+    const imageBuffer = fs.readFileSync(filePath);
+    const base64 = imageBuffer.toString("base64");
+    const dataUrl = `data:${mimeType};base64,${base64}`;
+
+    const response = await openai.chat.completions.create({
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a precise financial document extraction system. Respond ONLY with valid JSON. No markdown, no code blocks, no explanation.",
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: dataUrl },
+            },
+            {
+              type: "text",
+              text: VISION_PROMPT,
+            },
+          ] as never,
+        },
+      ],
+      temperature: 0,
+      max_tokens: 3000,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error("Empty response from vision model");
+
+    // Strip markdown code fences if model wraps output anyway
+    const cleaned = content.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
+    const parsed = JSON.parse(cleaned);
+    return InvoiceSchema.parse(parsed);
+  } catch (error) {
+    console.error("Vision extraction failed:", error);
+    if (error instanceof z.ZodError) {
+      console.error("Validation errors:", error.issues);
+    }
+    return emptyResult();
+  }
+}
+
+/**
+ * Text-based extraction for PDFs (after Docling OCR).
+ */
 export async function extractInvoiceData(
   ocrText: string
 ): Promise<ExtractedInvoiceData> {
   try {
     const response = await openai.chat.completions.create({
-      model: "llama3-70b-8192", // Fast and free model from Groq
+      model: "llama3-70b-8192",
       messages: [
         {
           role: "system",
@@ -78,7 +158,7 @@ export async function extractInvoiceData(
         },
         {
           role: "user",
-          content: EXTRACTION_PROMPT + ocrText,
+          content: TEXT_EXTRACTION_PROMPT + ocrText,
         },
       ],
       temperature: 0,
@@ -87,31 +167,15 @@ export async function extractInvoiceData(
     });
 
     const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error("Empty response from AI");
-    }
+    if (!content) throw new Error("Empty response from AI");
 
-    // Parse and validate the response
     const parsed = JSON.parse(content);
-    const validated = InvoiceSchema.parse(parsed);
-
-    return validated;
+    return InvoiceSchema.parse(parsed);
   } catch (error) {
     console.error("AI extraction failed:", error);
-
-    // Return empty structure on failure rather than crashing
     if (error instanceof z.ZodError) {
       console.error("Validation errors:", error.issues);
     }
-
-    return {
-      vendor_name: "",
-      invoice_number: "",
-      date: "",
-      currency: "USD",
-      total_amount: "",
-      tax_amount: "",
-      line_items: [],
-    };
+    return emptyResult();
   }
 }

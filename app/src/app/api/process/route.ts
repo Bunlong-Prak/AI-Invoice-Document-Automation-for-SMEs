@@ -4,8 +4,15 @@ import { db } from "@/lib/db";
 import { documents, extractedInvoices, lineItems, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { extractTextFromFile } from "@/lib/ocr";
-import { extractInvoiceData } from "@/lib/ai-extract";
+import { extractInvoiceData, extractInvoiceDataFromImage } from "@/lib/ai-extract";
 import { checkUsageLimit, logUsage } from "@/lib/usage";
+
+const IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/tiff",
+  "image/bmp",
+];
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -70,18 +77,27 @@ export async function POST(request: NextRequest) {
       .where(eq(documents.id, documentId));
 
     try {
-      // Step 1: OCR - Extract text
-      const rawText = await extractTextFromFile(
-        document.filePath,
-        document.mimeType
-      );
+      let invoiceData;
+      let rawText = "";
 
-      if (!rawText || rawText.trim().length === 0) {
-        throw new Error("OCR produced no readable text");
+      if (IMAGE_TYPES.includes(document.mimeType)) {
+        // Step 1 & 2 combined: Vision-based extraction
+        invoiceData = await extractInvoiceDataFromImage(document.filePath, document.mimeType);
+        rawText = "[Vision-based extraction - no raw text]";
+      } else {
+        // Step 1: OCR - Extract text
+        rawText = await extractTextFromFile(
+          document.filePath,
+          document.mimeType
+        );
+
+        if (!rawText || rawText.trim().length === 0) {
+          throw new Error("OCR produced no readable text");
+        }
+
+        // Step 2: AI - Extract structured data
+        invoiceData = await extractInvoiceData(rawText);
       }
-
-      // Step 2: AI - Extract structured data
-      const invoiceData = await extractInvoiceData(rawText);
 
       // Step 3: Store results
       const [invoice] = await db

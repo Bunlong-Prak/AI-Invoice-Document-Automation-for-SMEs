@@ -211,15 +211,29 @@ export default async function Home() {
                   <p className="text-zinc-500">// Resulting JSON</p>
                   <pre className="text-violet-300">
 {`{
-  "vendor_name": "Sour Sokheang",
-  "invoice_number": "TRX-948210",
-  "date": "2026-03-31",
+  "vendor_name": "Cambodia Beverage Company Ltd.",
+  "invoice_number": "290013578",
+  "date": "2024-01-27",
   "currency": "USD",
-  "total_amount": "150.00",
+  "total_amount": "2439.19",
   "line_items": [
     {
-      "description": "Bakong Transfer",
-      "total": "150.00"
+      "description": "Coke Zero Sugar 330ml 24 Sleek CAN SPF",
+      "quantity": "39",
+      "unit_price": "8.60",
+      "total": "334.23"
+    },
+    {
+      "description": "Samurai Mix 330ml 24 Sleek CAN",
+      "quantity": "26",
+      "unit_price": "8.45",
+      "total": "218.92"
+    },
+    {
+      "description": "Samurai Strawberry 330ml 24 Sleek CAN",
+      "quantity": "70",
+      "unit_price": "5.10",
+      "total": "355.60"
     }
   ]
 }`}

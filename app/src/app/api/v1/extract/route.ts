@@ -5,7 +5,7 @@ import { users, documents, extractedInvoices, lineItems } from "@/lib/db/schema"
 import { eq } from "drizzle-orm";
 import { saveFile } from "@/lib/storage";
 import { extractTextFromFile } from "@/lib/ocr";
-import { extractInvoiceData } from "@/lib/ai-extract";
+import { extractInvoiceData, extractInvoiceDataFromImage } from "@/lib/ai-extract";
 import { checkUsageLimit, logUsage } from "@/lib/usage";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -15,6 +15,13 @@ const ALLOWED_TYPES = [
   "image/tiff",
   "image/bmp",
   "application/pdf",
+];
+
+const IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/tiff",
+  "image/bmp",
 ];
 
 export async function POST(request: NextRequest) {
@@ -92,18 +99,27 @@ export async function POST(request: NextRequest) {
       .returning();
 
     try {
-      // Step 1: OCR - Extract text
-      const rawText = await extractTextFromFile(
-        filePath,
-        file.type
-      );
+      let invoiceData;
+      let rawText = "";
 
-      if (!rawText || rawText.trim().length === 0) {
-        throw new Error("OCR produced no readable text");
+      if (IMAGE_TYPES.includes(file.type)) {
+        // Step 1 & 2 combined: Vision-based extraction
+        invoiceData = await extractInvoiceDataFromImage(filePath, file.type);
+        rawText = "[Vision-based extraction - no raw text]";
+      } else {
+        // Step 1: OCR - Extract text
+        rawText = await extractTextFromFile(
+          filePath,
+          file.type
+        );
+
+        if (!rawText || rawText.trim().length === 0) {
+          throw new Error("OCR produced no readable text");
+        }
+
+        // Step 2: AI - Extract structured data
+        invoiceData = await extractInvoiceData(rawText);
       }
-
-      // Step 2: AI - Extract structured data
-      const invoiceData = await extractInvoiceData(rawText);
 
       // Step 3: Store results
       const [invoice] = await db
