@@ -1,10 +1,16 @@
 import path from "path";
 import fs from "fs/promises";
 import { v4 as uuidv4 } from "uuid";
+import os from "os";
 
-const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+// On Vercel, we MUST use /tmp for writing files.
+// Locally, we can use the project's uploads folder.
+const UPLOAD_DIR = process.env.VERCEL 
+  ? "/tmp" 
+  : path.join(process.cwd(), "uploads");
 
 export async function ensureUploadDir(): Promise<void> {
+  // /tmp always exists on Vercel/Linux, but we check/create for local dev
   try {
     await fs.access(UPLOAD_DIR);
   } catch {
