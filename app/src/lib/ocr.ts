@@ -1,51 +1,33 @@
 import fs from "fs";
-import path from "path";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
 
-export async function extractTextFromImage(filePath: string): Promise<string> {
-  const serviceUrl = process.env.DOCLING_SERVICE_URL || "http://localhost:8000";
-  
-  try {
-    // Use native Node.js FormData and Blob instead of the npm package
-    const fileBuffer = fs.readFileSync(filePath);
-    const blob = new Blob([fileBuffer]);
-    
-    const formData = new FormData();
-    formData.append("file", blob, path.basename(filePath));
-
-    const response = await fetch(`${serviceUrl}/extract`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Docling API error (${response.status}): ${errorData}`);
-    }
-
-    const data = await response.json();
-    return data.text; // Returns the markdown representation from Docling
-  } catch (error) {
-    console.error("Docling extraction failed:", error);
-    throw new Error(`OCR failed: ${error instanceof Error ? error.message : "Unknown error"}`);
-  }
+/**
+ * Extract text from a digital (selectable-text) PDF using pdf-parse.
+ * Returns empty string for scanned/image-only PDFs.
+ */
+export async function extractTextFromPdf(filePath: string): Promise<string> {
+  const buffer = fs.readFileSync(filePath);
+  const result = await pdfParse(buffer);
+  return result.text || "";
 }
 
 export async function extractTextFromFile(
   filePath: string,
   mimeType: string
 ): Promise<string> {
-  // Docling handles both PDFs and images perfectly
-  const supportedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/tiff",
-    "image/bmp",
-    "application/pdf",
-  ];
-
-  if (!supportedTypes.includes(mimeType)) {
-    throw new Error(`Unsupported file type: ${mimeType}`);
+  if (mimeType !== "application/pdf") {
+    throw new Error(`extractTextFromFile only handles PDFs. Got: ${mimeType}`);
   }
 
-  return extractTextFromImage(filePath);
+  const text = await extractTextFromPdf(filePath);
+
+  if (!text || text.trim().length < 20) {
+    throw new Error(
+      "This PDF appears to be a scanned document with no selectable text. " +
+        "Please export a page as JPG or PNG and upload that instead."
+    );
+  }
+
+  return text;
 }
