@@ -6,17 +6,19 @@ import { Providers } from "@/components/providers";
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "InvoiceAI — Smart Invoice Automation",
+  title: "InvoiceAI — Modern Document & Invoice Automation for SMEs",
   description:
-    "AI-powered invoice processing and data extraction for small and medium businesses. Upload, extract, manage, and export invoice data effortlessly.",
+    "Extract structured data from supplier invoices, receipts, and logistics documents in seconds. Built for accounting teams and growing businesses.",
 };
 
 export default function RootLayout({
@@ -25,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${geistMono.variable} h-full antialiased dark`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col font-sans bg-[#fbfbfa] text-slate-900 selection:bg-slate-200" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

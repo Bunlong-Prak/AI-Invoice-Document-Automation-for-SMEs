@@ -32,15 +32,15 @@ export function formatDate(date: string | Date | null): string {
 export function getStatusColor(status: string): string {
   switch (status) {
     case "processed":
-      return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+      return "bg-emerald-50 text-emerald-800 border-emerald-200";
     case "processing":
-      return "bg-amber-500/10 text-amber-500 border-amber-500/20";
+      return "bg-amber-50 text-amber-800 border-amber-200";
     case "error":
-      return "bg-red-500/10 text-red-500 border-red-500/20";
+      return "bg-rose-50 text-rose-800 border-rose-200";
     case "uploaded":
-      return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+      return "bg-sky-50 text-sky-800 border-sky-200";
     default:
-      return "bg-muted text-muted-foreground";
+      return "bg-neutral-100 text-neutral-700 border-neutral-200";
   }
 }
 

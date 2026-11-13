@@ -2,21 +2,21 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   FileText,
-  CheckCircle,
-  AlertCircle,
-  DollarSign,
   Search,
   Download,
   RefreshCw,
   Loader2,
   Trash2,
-  TrendingUp,
-  Activity,
-  Zap,
+  Upload,
+  Receipt,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowUpRight,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,9 +35,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Progress, ProgressTrack, ProgressIndicator } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency, formatDate, getStatusColor, cn } from "@/lib/utils";
+import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface DocumentRow {
@@ -82,7 +81,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [exporting, setExporting] = useState(false);
@@ -91,18 +90,18 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (search) params.set("search", search);
-      if (statusFilter) params.set("status", statusFilter);
+      if (search.trim()) params.set("search", search.trim());
+      if (statusFilter && statusFilter !== "all") params.set("status", statusFilter);
       params.set("page", page.toString());
-      params.set("limit", "20");
+      params.set("limit", "25");
 
       const res = await fetch(`/api/documents?${params.toString()}`);
       if (res.ok) {
         const json = await res.json();
         setData(json);
       }
-    } catch (err) {
-      toast.error("Failed to load dashboard data");
+    } catch {
+      toast.error("Failed to load invoice records");
     } finally {
       setLoading(false);
     }
@@ -127,31 +126,43 @@ export default function DashboardPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `invoices-export-${Date.now()}.csv`;
+        a.download = `invoices-export-${new Date().toISOString().slice(0, 10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Export downloaded successfully");
+        toast.success(
+          ids.length > 0
+            ? `Exported ${ids.length} selected invoices`
+            : "Exported all invoices to CSV"
+        );
+      } else {
+        toast.error("Failed to generate CSV export");
       }
     } catch {
-      toast.error("Export failed");
+      toast.error("Export request failed");
     } finally {
       setExporting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this invoice?")) return;
+
     try {
       const res = await fetch(`/api/documents/${id}`, { method: "DELETE" });
       if (res.ok) {
         toast.success("Document deleted");
         fetchData();
+      } else {
+        toast.error("Failed to delete document");
       }
     } catch {
-      toast.error("Failed to delete");
+      toast.error("Network error while deleting");
     }
   };
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     const next = new Set(selectedIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
@@ -169,299 +180,334 @@ export default function DashboardPage() {
 
   const stats = data?.stats;
   const usage = data?.usage;
-  const successRate = stats ? (stats.processedCount / (stats.totalDocuments || 1)) * 100 : 0;
-  const estimatedSavings = stats ? stats.processedCount * 0.5 : 0; // $0.50 saved per document
+  const processedPercent = stats && stats.totalDocuments > 0
+    ? Math.round((stats.processedCount / stats.totalDocuments) * 100)
+    : 100;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-[#e6e6e2]">
         <div>
-          <h1 className="text-3xl font-bold tracking-tighter text-white">Dashboard</h1>
-          <p className="text-zinc-500 text-[11px] font-mono uppercase tracking-widest mt-1">
-            Real_time_extraction_metrics
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Invoices & Receipts
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Automated OCR data extraction, line item breakdown, and exports.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="outline"
             size="sm"
             onClick={fetchData}
             disabled={loading}
-            className="border-white/10 hover:bg-white/5 text-xs font-semibold h-9"
+            className="h-9 px-3 text-xs font-medium border-[#e6e6e2] bg-white hover:bg-stone-50 text-slate-700 shadow-xs"
           >
-            <RefreshCw className={`w-3.5 h-3.5 mr-2 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={cn("w-3.5 h-3.5 mr-1.5", loading && "animate-spin")} />
             Refresh
           </Button>
           <Button
+            variant="outline"
             size="sm"
             onClick={handleExport}
-            disabled={exporting}
-            className="bg-white text-black hover:bg-zinc-200 text-xs font-bold h-9 px-5 rounded-full"
+            disabled={exporting || data?.documents.length === 0}
+            className="h-9 px-3 text-xs font-medium border-[#e6e6e2] bg-white hover:bg-stone-50 text-slate-700 shadow-xs"
           >
             {exporting ? (
-              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
             ) : (
-              <Download className="w-3.5 h-3.5 mr-2" />
+              <Download className="w-3.5 h-3.5 mr-1.5" />
             )}
             Export CSV
           </Button>
+          <Link href="/upload">
+            <Button
+              size="sm"
+              className="h-9 px-4 text-xs font-medium bg-slate-900 text-white hover:bg-slate-800 shadow-xs"
+            >
+              <Upload className="w-3.5 h-3.5 mr-1.5" />
+              Upload Invoices
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Primary Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        <Card className="border-white/[0.05] bg-[#0a0a0a] rounded-xl overflow-hidden relative group">
-          <CardContent className="p-6">
-            <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Processed_Docs</p>
-            <div className="flex items-baseline gap-2 mt-4">
-              <p className="text-4xl font-bold font-mono tracking-tighter text-white">{stats?.processedCount ?? "—"}</p>
-              <p className="text-[10px] text-emerald-500 font-mono font-bold">+100%</p>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Processed Invoices */}
+        <Card className="border border-[#e6e6e2] bg-white shadow-xs rounded-lg">
+          <CardContent className="p-5">
+            <p className="text-xs font-medium text-slate-500">Processed Invoices</p>
+            <div className="flex items-baseline justify-between mt-2">
+              <span className="text-2xl font-bold tracking-tight text-slate-900">
+                {stats?.processedCount ?? "0"}
+              </span>
+              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                {processedPercent}% parsed
+              </span>
             </div>
-            <div className="mt-4 h-[1px] bg-white/[0.05] w-full" />
-            <p className="text-[9px] font-mono text-zinc-700 mt-2 uppercase">Verified_system_output</p>
+            <p className="text-xs text-slate-400 mt-2">
+              {stats?.totalDocuments ?? 0} total uploaded
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="border-white/[0.05] bg-[#0a0a0a] rounded-xl overflow-hidden relative group">
-          <CardContent className="p-6">
-            <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Success_Rate</p>
-            <div className="flex items-baseline gap-2 mt-4">
-              <p className="text-4xl font-bold font-mono tracking-tighter text-white">{stats ? `${successRate.toFixed(1)}%` : "—"}</p>
+        {/* Card 2: Total Amount */}
+        <Card className="border border-[#e6e6e2] bg-white shadow-xs rounded-lg">
+          <CardContent className="p-5">
+            <p className="text-xs font-medium text-slate-500">Total Invoiced Volume</p>
+            <div className="flex items-baseline justify-between mt-2">
+              <span className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+                {stats ? formatCurrency(stats.totalAmount) : "—"}
+              </span>
             </div>
-            <div className="mt-4 h-[1px] bg-white/[0.05] w-full" />
-            <p className="text-[9px] font-mono text-zinc-700 mt-2 uppercase">Llama_3.1_precision</p>
+            <p className="text-xs text-slate-400 mt-2">
+              Sum of extracted totals
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="border-white/[0.05] bg-[#0a0a0a] rounded-xl overflow-hidden relative group">
-          <CardContent className="p-6">
-            <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Estimated_ROI</p>
-            <div className="flex items-baseline gap-2 mt-4">
-              <p className="text-4xl font-bold font-mono tracking-tighter text-violet-400">{formatCurrency(estimatedSavings)}</p>
+        {/* Card 3: Processing Errors */}
+        <Card className="border border-[#e6e6e2] bg-white shadow-xs rounded-lg">
+          <CardContent className="p-5">
+            <p className="text-xs font-medium text-slate-500">Extraction Status</p>
+            <div className="flex items-baseline justify-between mt-2">
+              <span className="text-2xl font-bold tracking-tight text-slate-900">
+                {(stats?.totalDocuments || 0) - (stats?.errorCount || 0)}
+              </span>
+              {stats && stats.errorCount > 0 ? (
+                <span className="text-xs font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  {stats.errorCount} review needed
+                </span>
+              ) : (
+                <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  All clean
+                </span>
+              )}
             </div>
-            <div className="mt-4 h-[1px] bg-white/[0.05] w-full" />
-            <p className="text-[9px] font-mono text-zinc-700 mt-2 uppercase">Calculated_labor_savings</p>
+            <p className="text-xs text-slate-400 mt-2">
+              High-confidence OCR & Vision
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="border-violet-500/20 bg-[#0a0a0a] md:col-span-3 lg:col-span-1 border-l-2 border-l-violet-500 rounded-xl">
-          <CardContent className="p-6 space-y-4">
+        {/* Card 4: Monthly Quota */}
+        <Card className="border border-[#e6e6e2] bg-white shadow-xs rounded-lg">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Plan_Usage</p>
-              <Badge variant="outline" className="text-[9px] font-mono uppercase font-bold bg-violet-500/10 border-violet-500/20 text-violet-400 rounded-full px-2">
+              <p className="text-xs font-medium text-slate-500">Monthly Usage</p>
+              <Badge variant="outline" className="text-[10px] uppercase font-semibold text-slate-600 bg-stone-50 border-[#e6e6e2]">
                 {data?.subscriptionTier || "Free"}
               </Badge>
             </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-[11px] font-mono">
-                <span className="text-zinc-500">{usage?.used ?? 0} / {usage?.limit ?? 100} REQ</span>
-                <span className="text-white font-bold">{usage ? Math.round((usage.used / usage.limit) * 100) : 0}%</span>
-              </div>
-              <Progress value={usage ? (usage.used / usage.limit) * 100 : 0} className="h-1 bg-white/[0.05]">
-                <ProgressTrack>
-                  <ProgressIndicator className={cn(
-                    "transition-all",
-                    usage && (usage.used / usage.limit) > 0.9 ? "bg-red-500" : 
-                    usage && (usage.used / usage.limit) > 0.7 ? "bg-amber-500" : "bg-violet-600"
-                  )} />
-                </ProgressTrack>
-              </Progress>
+            <div className="flex items-baseline justify-between mt-2">
+              <span className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+                {usage?.used ?? 0}
+                <span className="text-sm font-normal text-slate-400 ml-1">
+                  / {usage?.limit ?? 100}
+                </span>
+              </span>
+              <span className="text-xs text-slate-500">
+                {usage ? `${usage.remaining} left` : "—"}
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-3">
+              <div
+                className="bg-slate-900 h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    usage ? Math.round((usage.used / usage.limit) * 100) : 0
+                  )}%`,
+                }}
+              />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Table Section */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
-              <Input
-                placeholder="Search vendor, invoice #..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="pl-9 bg-white/[0.03] border-white/[0.05] text-xs h-10 rounded-lg placeholder:text-zinc-700"
-              />
-            </div>
+      {/* Table Section */}
+      <div className="space-y-4">
+        {/* Search & Filter Toolbar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Search vendor, invoice number, or filename..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="pl-9 h-9 text-xs bg-white border-[#e6e6e2] text-slate-900 placeholder:text-slate-400 rounded-md shadow-xs focus-visible:ring-slate-900"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
             <Select
               value={statusFilter}
               onValueChange={(val) => {
-                setStatusFilter(!val || val === "all" ? "" : val);
+                setStatusFilter(val || "all");
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[160px] bg-white/[0.03] border-white/[0.05] text-xs h-10 rounded-lg text-zinc-400">
-                <SelectValue placeholder="STATUS_FILTER" />
+              <SelectTrigger className="w-[150px] h-9 text-xs bg-white border-[#e6e6e2] text-slate-700 rounded-md shadow-xs">
+                <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-white/10 text-xs font-mono">
-                <SelectItem value="all">ALL_STATUSES</SelectItem>
-                <SelectItem value="uploaded">UPLOADED</SelectItem>
-                <SelectItem value="processing">PROCESSING</SelectItem>
-                <SelectItem value="processed">PROCESSED</SelectItem>
-                <SelectItem value="error">ERROR</SelectItem>
+              <SelectContent className="bg-white border-[#e6e6e2] text-xs">
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="processed">Processed</SelectItem>
+                <SelectItem value="processing">Processing</SelectItem>
+                <SelectItem value="uploaded">Uploaded</SelectItem>
+                <SelectItem value="error">Error</SelectItem>
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          <Card className="border-white/[0.05] bg-[#0a0a0a] rounded-xl overflow-hidden">
-            <Table>
-              <TableHeader className="bg-white/[0.02]">
-                <TableRow className="hover:bg-transparent border-white/[0.05]">
-                  <TableHead className="w-10">
-                    <input
-                      type="checkbox"
-                      className="rounded accent-violet-500 bg-black border-white/10"
-                      checked={
-                        data
-                          ? data.documents.length > 0 &&
-                            selectedIds.size === data.documents.length
-                          : false
-                      }
-                      onChange={toggleAll}
-                    />
-                  </TableHead>
-                  <TableHead className="text-[10px] uppercase font-mono font-bold tracking-[0.1em] text-zinc-600">Vendor_Identity</TableHead>
-                  <TableHead className="text-[10px] uppercase font-mono font-bold tracking-[0.1em] text-zinc-600">Net_Amount</TableHead>
-                  <TableHead className="text-[10px] uppercase font-mono font-bold tracking-[0.1em] text-zinc-600">Engine_Status</TableHead>
-                  <TableHead className="text-[10px] uppercase font-mono font-bold tracking-[0.1em] text-zinc-600 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i} className="border-white/[0.05]">
-                      {Array.from({ length: 5 }).map((_, j) => (
-                        <TableCell key={j}>
-                          <Skeleton className="h-4 w-full bg-white/5" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : data?.documents.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="text-center py-20 text-zinc-600"
-                    >
-                      <FileText className="w-10 h-10 mx-auto mb-4 opacity-20" />
-                      <p className="text-xs font-mono uppercase tracking-widest">No_documents_detected</p>
+        {/* Data Table */}
+        <div className="border border-[#e6e6e2] bg-white rounded-lg shadow-xs overflow-hidden">
+          <Table>
+            <TableHeader className="bg-[#fbfbfa] border-b border-[#e6e6e2]">
+              <TableRow className="hover:bg-transparent border-[#e6e6e2]">
+                <TableHead className="w-10 pl-4">
+                  <input
+                    type="checkbox"
+                    className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                    checked={
+                      data
+                        ? data.documents.length > 0 &&
+                          selectedIds.size === data.documents.length
+                        : false
+                    }
+                    onChange={toggleAll}
+                  />
+                </TableHead>
+                <TableHead className="text-xs font-semibold text-slate-700">Vendor & Document</TableHead>
+                <TableHead className="text-xs font-semibold text-slate-700">Invoice #</TableHead>
+                <TableHead className="text-xs font-semibold text-slate-700">Amount</TableHead>
+                <TableHead className="text-xs font-semibold text-slate-700">Date</TableHead>
+                <TableHead className="text-xs font-semibold text-slate-700">Status</TableHead>
+                <TableHead className="text-xs font-semibold text-slate-700 text-right pr-4">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="border-[#e6e6e2]">
+                    <TableCell colSpan={7} className="py-4 px-4">
+                      <Skeleton className="h-5 w-full bg-slate-100" />
                     </TableCell>
                   </TableRow>
-                ) : (
-                  data?.documents.map((doc) => (
-                    <TableRow
-                      key={doc.id}
-                      className="cursor-pointer hover:bg-white/[0.02] border-white/[0.05] transition-colors"
-                      onClick={() => router.push(`/invoices/${doc.id}`)}
-                    >
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          className="rounded accent-violet-500 bg-black border-white/10"
-                          checked={selectedIds.has(doc.id)}
-                          onChange={() => toggleSelect(doc.id)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-white tracking-tight">{doc.vendorName || doc.originalName}</span>
-                          <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-tighter mt-0.5">
-                            {doc.invoiceNumber ? `ID: ${doc.invoiceNumber}` : formatDate(doc.uploadedAt)}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-zinc-300">
-                        {formatCurrency(doc.totalAmount, doc.currency || "USD")}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-[9px] font-mono px-2 py-0 h-5 uppercase rounded-full border-none",
-                            getStatusColor(doc.status).includes("emerald") ? "bg-emerald-500/10 text-emerald-400" :
-                            getStatusColor(doc.status).includes("amber") ? "bg-amber-500/10 text-amber-400" :
-                            "bg-zinc-800 text-zinc-400"
-                          )}
-                        >
-                          {doc.status}
+                ))
+              ) : data?.documents.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="text-center py-16 text-slate-500"
+                  >
+                    <Receipt className="w-10 h-10 mx-auto mb-3 text-slate-300" />
+                    <p className="text-sm font-semibold text-slate-800">No invoices found</p>
+                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                      {search || statusFilter !== "all"
+                        ? "Try clearing your search query or filter."
+                        : "Upload a PDF invoice or receipt image to see automated extraction."}
+                    </p>
+                    <Link href="/upload" className="inline-block mt-4">
+                      <Button size="sm" variant="outline" className="text-xs border-[#e6e6e2] shadow-xs">
+                        <Upload className="w-3.5 h-3.5 mr-1.5" />
+                        Upload Invoices
+                      </Button>
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                data?.documents.map((doc) => (
+                  <TableRow
+                    key={doc.id}
+                    className="cursor-pointer hover:bg-stone-50/70 border-[#e6e6e2] transition-colors"
+                    onClick={() => router.push(`/invoices/${doc.id}`)}
+                  >
+                    <TableCell className="pl-4" onClick={(e) => toggleSelect(doc.id, e)}>
+                      <input
+                        type="checkbox"
+                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                        checked={selectedIds.has(doc.id)}
+                        onChange={() => {}}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-slate-900 hover:underline">
+                          {doc.vendorName || doc.originalName}
+                        </span>
+                        <span className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[220px]">
+                          {doc.originalName}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-slate-700">
+                      {doc.invoiceNumber || "—"}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs font-medium text-slate-900">
+                      {formatCurrency(doc.totalAmount, doc.currency || "USD")}
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-500">
+                      {formatDate(doc.invoiceDate || doc.uploadedAt)}
+                    </TableCell>
+                    <TableCell>
+                      {doc.status === "processed" && (
+                        <Badge className="text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-none">
+                          Processed
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      )}
+                      {doc.status === "processing" && (
+                        <Badge className="text-[11px] font-medium px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 shadow-none flex items-center gap-1 w-fit">
+                          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                          Processing
+                        </Badge>
+                      )}
+                      {doc.status === "uploaded" && (
+                        <Badge className="text-[11px] font-medium px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 shadow-none">
+                          Uploaded
+                        </Badge>
+                      )}
+                      {doc.status === "error" && (
+                        <Badge className="text-[11px] font-medium px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 shadow-none">
+                          Needs Review
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-zinc-700 hover:text-red-500 hover:bg-red-500/5 transition-all"
-                          onClick={() => handleDelete(doc.id)}
+                          className="h-7 w-7 text-slate-400 hover:text-slate-800 hover:bg-slate-100"
+                          onClick={() => router.push(`/invoices/${doc.id}`)}
+                          title="View & Edit"
+                        >
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                          onClick={(e) => handleDelete(doc.id, e)}
+                          title="Delete"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Card>
-        </div>
-
-        {/* Sidebar Help/API Section */}
-        <div className="space-y-6">
-          <Card className="border-white/[0.05] bg-[#0a0a0a] border-l-2 border-l-violet-500 rounded-xl">
-            <CardHeader className="p-6">
-              <CardTitle className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-                <Zap className="w-3 h-3 text-violet-500" />
-                API_INTEGRATION
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 pt-0 space-y-5">
-              <div className="p-4 bg-black rounded border border-white/[0.05] font-mono text-[10px] text-zinc-400 leading-relaxed">
-                <span className="text-emerald-500">POST</span> /api/v1/extract<br />
-                <span className="text-zinc-600">AUTH: Bearer sk_...</span>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full text-[10px] font-mono uppercase tracking-widest h-9 border-white/10 hover:bg-white/5"
-                onClick={() => router.push("/settings/keys")}
-              >
-                Get_Production_Keys
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/[0.05] bg-[#0a0a0a] rounded-xl">
-            <CardHeader className="p-6 pb-2">
-              <CardTitle className="text-[10px] font-mono uppercase tracking-widest text-zinc-500">Global_Support</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 pt-2">
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 group">
-                  <div className="w-8 h-8 rounded bg-white/[0.03] border border-white/[0.05] flex items-center justify-center shrink-0 group-hover:border-violet-500/50 transition-colors">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-white tracking-tight">Bakong & KHR</p>
-                    <p className="text-[9px] font-mono text-zinc-600 uppercase tracking-tighter">Native_bank_transfers</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 group">
-                  <div className="w-8 h-8 rounded bg-white/[0.03] border border-white/[0.05] flex items-center justify-center shrink-0 group-hover:border-violet-500/50 transition-colors">
-                    <CheckCircle className="w-3.5 h-3.5 text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-white tracking-tight">Multi-Currency</p>
-                    <p className="text-[9px] font-mono text-zinc-600 uppercase tracking-tighter">Global_tax_compliant</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>

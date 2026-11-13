@@ -6,6 +6,7 @@ import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 interface PricingCardProps {
   plan: {
@@ -48,49 +49,61 @@ export function PricingCard({ plan, isLoggedIn }: PricingCardProps) {
       } else {
         toast.error(data.error || "Failed to start checkout");
       }
-    } catch (error) {
-      toast.error("An error occurred");
+    } catch {
+      toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className={`bg-[#0a0a0a] border-white/[0.05] text-white relative flex flex-col transition-all hover:border-white/10 overflow-visible ${
-      plan.popular ? "border-violet-500/50 ring-1 ring-violet-500/20" : ""
-    }`}>
+    <Card
+      className={cn(
+        "bg-white border text-slate-900 relative flex flex-col transition-all rounded-lg overflow-visible shadow-xs",
+        plan.popular
+          ? "border-slate-900 ring-1 ring-slate-900/10"
+          : "border-[#e6e6e2] hover:border-slate-300"
+      )}
+    >
       {plan.popular && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-[10px] font-mono font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-violet-400/30 shadow-[0_0_20px_rgba(139,92,246,0.3)] z-10">
-          Optimal Choice
+        <div className="absolute -top-3 left-6 bg-slate-900 text-white text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow-xs">
+          Recommended
         </div>
       )}
-      <CardHeader>
-        <CardTitle className="text-xl tracking-tight font-semibold">{plan.name}</CardTitle>
-        <div className="flex items-baseline gap-1 mt-2">
-          <span className="text-4xl font-bold font-mono tracking-tighter">{plan.price}</span>
-          <span className="text-zinc-500 text-sm font-medium">/month</span>
+      <CardHeader className="pt-6 pb-4">
+        <CardTitle className="text-lg font-bold tracking-tight text-slate-900">
+          {plan.name}
+        </CardTitle>
+        <div className="flex items-baseline gap-1 mt-3">
+          <span className="text-3xl font-bold font-mono tracking-tight text-slate-900">
+            {plan.price}
+          </span>
+          <span className="text-slate-500 text-xs font-normal">/month</span>
         </div>
-        <CardDescription className="text-zinc-500 pt-2 text-sm leading-relaxed">{plan.description}</CardDescription>
+        <CardDescription className="text-slate-500 pt-2 text-xs leading-relaxed">
+          {plan.description}
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6 flex-1 flex flex-col justify-between">
-        <ul className="space-y-3">
+      <CardContent className="space-y-6 flex-1 flex flex-col justify-between pt-0">
+        <ul className="space-y-2.5 border-t border-[#e6e6e2] pt-4">
           {plan.features.map((feature, j) => (
-            <li key={j} className="flex items-center gap-2 text-sm text-zinc-400">
-              <Check className="w-3.5 h-3.5 text-emerald-500/80" />
-              {feature}
+            <li key={j} className="flex items-start gap-2.5 text-xs text-slate-600">
+              <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+              <span>{feature}</span>
             </li>
           ))}
         </ul>
-        <Button 
+        <Button
           onClick={handleCheckout}
           disabled={isLoading}
-          className={`w-full rounded-full h-11 mt-6 font-semibold transition-all ${
-            plan.popular 
-              ? "bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-900/20" 
-              : "bg-white text-black hover:bg-zinc-200"
-          }`}
+          className={cn(
+            "w-full h-10 text-xs font-semibold rounded-md transition-all shadow-xs",
+            plan.popular
+              ? "bg-slate-900 hover:bg-slate-800 text-white"
+              : "bg-stone-100 hover:bg-stone-200 text-slate-900 border border-[#e6e6e2]"
+          )}
         >
-          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : plan.cta}
+          {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : plan.cta}
         </Button>
       </CardContent>
     </Card>
