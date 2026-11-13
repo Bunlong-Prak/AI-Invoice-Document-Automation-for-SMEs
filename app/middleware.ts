@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
 
-const protectedPaths = ["/dashboard", "/upload", "/invoices"];
+const protectedPaths = ["/dashboard", "/upload", "/invoices", "/settings"];
 
 export default auth((request) => {
   const session = request.auth;
@@ -14,6 +14,10 @@ export default auth((request) => {
 
   if (isProtected && !session?.user) {
     return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (pathname === "/login" && session?.user) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();

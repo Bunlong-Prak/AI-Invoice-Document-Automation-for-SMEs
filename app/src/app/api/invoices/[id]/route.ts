@@ -2,7 +2,61 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { extractedInvoices, lineItems, documents } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
+import { parseNumeric } from "@/lib/utils";
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  try {
+    const records = await db
+      .select({
+        invoice: extractedInvoices,
+        document: documents,
+      })
+      .from(extractedInvoices)
+      .innerJoin(documents, eq(extractedInvoices.documentId, documents.id))
+      .where(
+        and(
+          or(eq(extractedInvoices.id, id), eq(extractedInvoices.documentId, id)),
+          eq(documents.userId, session.user.id)
+        )
+      )
+      .limit(1);
+
+    if (records.length === 0) {
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    }
+
+    const { invoice, document } = records[0];
+
+    const items = await db
+      .select()
+      .from(lineItems)
+      .where(eq(lineItems.invoiceId, invoice.id))
+      .orderBy(lineItems.sortOrder);
+
+    return NextResponse.json({
+      invoice,
+      document,
+      lineItems: items,
+    });
+  } catch (error) {
+    console.error("Error fetching invoice:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch invoice" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PUT(
   request: NextRequest,
@@ -17,8 +71,8 @@ export async function PUT(
   const body = await request.json();
 
   try {
-    // Verify ownership
-    const invoice = await db
+    // Verify ownership (match either extractedInvoices.id or documentId)
+    const invoiceRecords = await db
       .select({
         invoiceId: extractedInvoices.id,
         documentId: extractedInvoices.documentId,
@@ -27,15 +81,17 @@ export async function PUT(
       .innerJoin(documents, eq(extractedInvoices.documentId, documents.id))
       .where(
         and(
-          eq(extractedInvoices.id, id),
+          or(eq(extractedInvoices.id, id), eq(extractedInvoices.documentId, id)),
           eq(documents.userId, session.user.id)
         )
       )
       .limit(1);
 
-    if (invoice.length === 0) {
+    if (invoiceRecords.length === 0) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
+
+    const targetInvoiceId = invoiceRecords[0].invoiceId;
 
     // Update invoice fields
     const {
@@ -55,16 +111,16 @@ export async function PUT(
         invoiceNumber: invoiceNumber ?? null,
         date: date ?? null,
         currency: currency ?? null,
-        totalAmount: totalAmount ?? null,
-        taxAmount: taxAmount ?? null,
+        totalAmount: parseNumeric(totalAmount),
+        taxAmount: parseNumeric(taxAmount),
         updatedAt: new Date(),
       })
-      .where(eq(extractedInvoices.id, id));
+      .where(eq(extractedInvoices.id, targetInvoiceId));
 
     // Update line items if provided
     if (items && Array.isArray(items)) {
       // Delete existing line items
-      await db.delete(lineItems).where(eq(lineItems.invoiceId, id));
+      await db.delete(lineItems).where(eq(lineItems.invoiceId, targetInvoiceId));
 
       // Insert new line items
       if (items.length > 0) {
@@ -75,18 +131,18 @@ export async function PUT(
             unitPrice?: string;
             total?: string;
           }, index: number) => ({
-            invoiceId: id,
+            invoiceId: targetInvoiceId,
             description: item.description || null,
             quantity: item.quantity || null,
-            unitPrice: item.unitPrice || null,
-            total: item.total || null,
+            unitPrice: parseNumeric(item.unitPrice),
+            total: parseNumeric(item.total),
             sortOrder: index,
           }))
         );
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, invoiceId: targetInvoiceId });
   } catch (error) {
     console.error("Error updating invoice:", error);
     return NextResponse.json(

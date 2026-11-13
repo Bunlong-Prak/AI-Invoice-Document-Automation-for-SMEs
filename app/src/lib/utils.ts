@@ -48,3 +48,18 @@ export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength) + "…";
 }
+
+/**
+ * Sanitizes input numbers/strings for PostgreSQL numeric columns.
+ * Strips currency symbols, commas, and invalid characters.
+ * Returns null if the value is empty, null, or not a valid number.
+ */
+export function parseNumeric(val: string | number | null | undefined): string | null {
+  if (val === null || val === undefined) return null;
+  const str = String(val).trim();
+  if (!str) return null;
+  // Strip currency symbols and commas, keep digits, decimal point, negative sign
+  const cleaned = str.replace(/[^0-9.-]/g, "");
+  if (!cleaned || isNaN(Number(cleaned))) return null;
+  return cleaned;
+}

@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { extractTextFromFile } from "@/lib/ocr";
 import { extractInvoiceData, extractInvoiceDataFromImage } from "@/lib/ai-extract";
 import { checkUsageLimit, logUsage } from "@/lib/usage";
+import { parseNumeric } from "@/lib/utils";
 
 const IMAGE_TYPES = [
   "image/jpeg",
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     // Update status to processing
     await db
       .update(documents)
-      .set({ status: "processing" })
+      .set({ status: "processing", errorMessage: null })
       .where(eq(documents.id, documentId));
 
     try {
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
       if (IMAGE_TYPES.includes(document.mimeType)) {
         // Step 1 & 2 combined: Vision-based extraction
         invoiceData = await extractInvoiceDataFromImage(document.filePath, document.mimeType);
-        rawText = "[Vision-based extraction - no raw text]";
+        rawText = "[Vision-based extraction - image file]";
       } else {
         // Step 1: OCR - Extract text
         rawText = await extractTextFromFile(
@@ -99,6 +100,11 @@ export async function POST(request: NextRequest) {
         invoiceData = await extractInvoiceData(rawText);
       }
 
+      // If reprocessing, remove previous extracted invoice and cascading line items
+      await db
+        .delete(extractedInvoices)
+        .where(eq(extractedInvoices.documentId, documentId));
+
       // Step 3: Store results
       const [invoice] = await db
         .insert(extractedInvoices)
@@ -108,22 +114,22 @@ export async function POST(request: NextRequest) {
           invoiceNumber: invoiceData.invoice_number || null,
           date: invoiceData.date || null,
           currency: invoiceData.currency || "USD",
-          totalAmount: invoiceData.total_amount || null,
-          taxAmount: invoiceData.tax_amount || null,
+          totalAmount: parseNumeric(invoiceData.total_amount),
+          taxAmount: parseNumeric(invoiceData.tax_amount),
           rawText,
           rawJson: JSON.stringify(invoiceData),
         })
         .returning();
 
       // Insert line items
-      if (invoiceData.line_items.length > 0) {
+      if (invoiceData.line_items && invoiceData.line_items.length > 0) {
         await db.insert(lineItems).values(
           invoiceData.line_items.map((item, index) => ({
             invoiceId: invoice.id,
             description: item.description || null,
             quantity: item.quantity || null,
-            unitPrice: item.unit_price || null,
-            total: item.total || null,
+            unitPrice: parseNumeric(item.unit_price),
+            total: parseNumeric(item.total),
             sortOrder: index,
           }))
         );
@@ -132,7 +138,7 @@ export async function POST(request: NextRequest) {
       // Update document status
       await db
         .update(documents)
-        .set({ status: "processed" })
+        .set({ status: "processed", errorMessage: null })
         .where(eq(documents.id, documentId));
 
       // Log usage
@@ -145,24 +151,23 @@ export async function POST(request: NextRequest) {
     } catch (processingError) {
       // Mark document as error
       console.error("Processing error:", processingError);
+      const errorMessage =
+        processingError instanceof Error
+          ? processingError.message
+          : "Processing failed";
+
       await db
         .update(documents)
         .set({
           status: "error",
-          errorMessage:
-            processingError instanceof Error
-              ? processingError.message
-              : "Processing failed",
+          errorMessage,
         })
         .where(eq(documents.id, documentId));
 
       return NextResponse.json(
         {
           error: "Processing failed",
-          message:
-            processingError instanceof Error
-              ? processingError.message
-              : "Unknown error",
+          message: errorMessage,
         },
         { status: 500 }
       );

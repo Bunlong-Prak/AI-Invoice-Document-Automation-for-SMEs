@@ -3,11 +3,6 @@ import { z } from "zod";
 import fs from "fs";
 import type { ExtractedInvoiceData } from "@/types";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-});
-
 const LineItemSchema = z.object({
   description: z.string().default(""),
   quantity: z.string().default(""),
@@ -74,108 +69,130 @@ ${EXTRACTION_SCHEMA_DESCRIPTION}
 OCR TEXT:
 `;
 
-function emptyResult(): ExtractedInvoiceData {
-  return {
-    vendor_name: "",
-    invoice_number: "",
-    date: "",
-    currency: "USD",
-    total_amount: "",
-    tax_amount: "",
-    line_items: [],
-  };
+export function getClientConfig() {
+  const groqKey = process.env.GROQ_API_KEY;
+  const openAiKey = process.env.OPENAI_API_KEY;
+  const explicitBaseUrl = process.env.AI_BASE_URL || process.env.OPENAI_BASE_URL;
+
+  // Determine provider: Groq or OpenAI
+  const isGroq = Boolean(
+    groqKey ||
+    (openAiKey && openAiKey.startsWith("gsk_")) ||
+    explicitBaseUrl?.includes("groq.com")
+  );
+
+  const apiKey = groqKey || openAiKey || "";
+  const baseURL = explicitBaseUrl || (isGroq ? "https://api.groq.com/openai/v1" : undefined);
+
+  // Modern defaults:
+  // - Groq: llama-3.2-11b-vision-preview (vision), llama-3.3-70b-versatile (text)
+  // - OpenAI: gpt-4o-mini
+  const visionModel =
+    process.env.VISION_MODEL ||
+    process.env.GROQ_VISION_MODEL ||
+    (isGroq ? "llama-3.2-11b-vision-preview" : "gpt-4o-mini");
+
+  const textModel =
+    process.env.TEXT_MODEL ||
+    process.env.GROQ_TEXT_MODEL ||
+    (isGroq ? "llama-3.3-70b-versatile" : "gpt-4o-mini");
+
+  return { apiKey, baseURL, visionModel, textModel, isGroq };
+}
+
+function getAiClient() {
+  const { apiKey, baseURL } = getClientConfig();
+  if (!apiKey) {
+    throw new Error(
+      "No AI API key found. Please set GROQ_API_KEY (for Groq Llama 3) or OPENAI_API_KEY in your .env file."
+    );
+  }
+  return new OpenAI({
+    apiKey,
+    ...(baseURL ? { baseURL } : {}),
+  });
 }
 
 /**
  * Vision-based extraction for image files (JPG, PNG, TIFF, BMP).
- * Sends image directly to Llama 4 Scout on Groq — no OCR step needed.
+ * Sends image directly to Vision LLM.
  */
 export async function extractInvoiceDataFromImage(
   filePath: string,
   mimeType: string
 ): Promise<ExtractedInvoiceData> {
-  try {
-    const imageBuffer = fs.readFileSync(filePath);
-    const base64 = imageBuffer.toString("base64");
-    const dataUrl = `data:${mimeType};base64,${base64}`;
+  const { visionModel } = getClientConfig();
+  const client = getAiClient();
 
-    const response = await openai.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a precise financial document extraction system. Respond ONLY with valid JSON. No markdown, no code blocks, no explanation.",
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "image_url",
-              image_url: { url: dataUrl },
-            },
-            {
-              type: "text",
-              text: VISION_PROMPT,
-            },
-          ] as never,
-        },
-      ],
-      temperature: 0,
-      max_tokens: 3000,
-    });
+  const imageBuffer = fs.readFileSync(filePath);
+  const base64 = imageBuffer.toString("base64");
+  const dataUrl = `data:${mimeType};base64,${base64}`;
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error("Empty response from vision model");
+  const response = await client.chat.completions.create({
+    model: visionModel,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a precise financial document extraction system. Respond ONLY with valid JSON. No markdown, no code blocks, no explanation.",
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: { url: dataUrl },
+          },
+          {
+            type: "text",
+            text: VISION_PROMPT,
+          },
+        ] as never,
+      },
+    ],
+    temperature: 0,
+    max_tokens: 3000,
+  });
 
-    // Strip markdown code fences if model wraps output anyway
-    const cleaned = content.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
-    const parsed = JSON.parse(cleaned);
-    return InvoiceSchema.parse(parsed);
-  } catch (error) {
-    console.error("Vision extraction failed:", error);
-    if (error instanceof z.ZodError) {
-      console.error("Validation errors:", error.issues);
-    }
-    return emptyResult();
-  }
+  const content = response.choices[0]?.message?.content;
+  if (!content) throw new Error("Empty response from vision model");
+
+  const cleaned = content.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
+  const parsed = JSON.parse(cleaned);
+  return InvoiceSchema.parse(parsed);
 }
 
 /**
- * Text-based extraction for PDFs (after Docling OCR).
+ * Text-based extraction for PDFs.
  */
 export async function extractInvoiceData(
   ocrText: string
 ): Promise<ExtractedInvoiceData> {
-  try {
-    const response = await openai.chat.completions.create({
-      model: "llama3-70b-8192",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a precise data extraction system. Respond ONLY with valid JSON. No markdown formatting, no code blocks, no explanations.",
-        },
-        {
-          role: "user",
-          content: TEXT_EXTRACTION_PROMPT + ocrText,
-        },
-      ],
-      temperature: 0,
-      max_tokens: 2000,
-      response_format: { type: "json_object" },
-    });
+  const { textModel } = getClientConfig();
+  const client = getAiClient();
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error("Empty response from AI");
+  const response = await client.chat.completions.create({
+    model: textModel,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a precise data extraction system. Respond ONLY with valid JSON. No markdown formatting, no code blocks, no explanations.",
+      },
+      {
+        role: "user",
+        content: TEXT_EXTRACTION_PROMPT + ocrText,
+      },
+    ],
+    temperature: 0,
+    max_tokens: 2000,
+    response_format: { type: "json_object" },
+  });
 
-    const parsed = JSON.parse(content);
-    return InvoiceSchema.parse(parsed);
-  } catch (error) {
-    console.error("AI extraction failed:", error);
-    if (error instanceof z.ZodError) {
-      console.error("Validation errors:", error.issues);
-    }
-    return emptyResult();
-  }
+  const content = response.choices[0]?.message?.content;
+  if (!content) throw new Error("Empty response from AI");
+
+  const cleaned = content.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
+  const parsed = JSON.parse(cleaned);
+  return InvoiceSchema.parse(parsed);
 }

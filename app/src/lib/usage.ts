@@ -30,7 +30,7 @@ export async function checkUsageLimit(userId: string, subscriptionTier: string) 
   return {
     used: Number(result.value),
     limit,
-    remaining: limit - Number(result.value),
+    remaining: Math.max(0, limit - Number(result.value)),
     hasReachedLimit: Number(result.value) >= limit,
   };
 }

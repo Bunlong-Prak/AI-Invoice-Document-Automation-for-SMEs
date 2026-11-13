@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { documents, extractedInvoices, lineItems, users } from "@/lib/db/schema";
-import { eq, and, desc, ilike, gte, lte, sql, count } from "drizzle-orm";
+import { documents, extractedInvoices, users } from "@/lib/db/schema";
+import { eq, and, desc, ilike, or, gte, lte, sql, count } from "drizzle-orm";
 import { checkUsageLimit } from "@/lib/usage";
 
 export async function GET(request: NextRequest) {
@@ -32,14 +32,42 @@ export async function GET(request: NextRequest) {
   const offset = (page - 1) * limit;
 
   try {
-    // Build conditions
+    // Build query conditions
     const conditions = [eq(documents.userId, session.user.id)];
     
-    if (status) {
+    if (status && ["uploaded", "processing", "processed", "error"].includes(status)) {
       conditions.push(eq(documents.status, status as "uploaded" | "processing" | "processed" | "error"));
     }
 
-    // Get documents with their invoices
+    if (search.trim()) {
+      const term = `%${search.trim()}%`;
+      conditions.push(
+        or(
+          ilike(documents.originalName, term),
+          ilike(extractedInvoices.vendorName, term),
+          ilike(extractedInvoices.invoiceNumber, term)
+        )!
+      );
+    }
+
+    if (dateFrom) {
+      conditions.push(gte(extractedInvoices.date, dateFrom));
+    }
+
+    if (dateTo) {
+      conditions.push(lte(extractedInvoices.date, dateTo));
+    }
+
+    // Get total matching count for accurate pagination
+    const totalResult = await db
+      .select({ count: count() })
+      .from(documents)
+      .leftJoin(extractedInvoices, eq(documents.id, extractedInvoices.documentId))
+      .where(and(...conditions));
+
+    const total = totalResult[0]?.count || 0;
+
+    // Get paginated documents with their invoices
     const docs = await db
       .select({
         id: documents.id,
@@ -64,39 +92,7 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    // Filter by search (vendor name, invoice number) in application layer
-    let filteredDocs = docs;
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredDocs = docs.filter(
-        (d) =>
-          d.vendorName?.toLowerCase().includes(searchLower) ||
-          d.invoiceNumber?.toLowerCase().includes(searchLower) ||
-          d.originalName.toLowerCase().includes(searchLower)
-      );
-    }
-
-    if (dateFrom) {
-      filteredDocs = filteredDocs.filter(
-        (d) => d.invoiceDate && d.invoiceDate >= dateFrom
-      );
-    }
-
-    if (dateTo) {
-      filteredDocs = filteredDocs.filter(
-        (d) => d.invoiceDate && d.invoiceDate <= dateTo
-      );
-    }
-
-    // Get total count
-    const totalResult = await db
-      .select({ count: count() })
-      .from(documents)
-      .where(eq(documents.userId, session.user.id));
-
-    const total = totalResult[0]?.count || 0;
-
-    // Stats
+    // Stats across all documents owned by user
     const statsResult = await db
       .select({
         status: documents.status,
@@ -114,15 +110,17 @@ export async function GET(request: NextRequest) {
       .innerJoin(documents, eq(extractedInvoices.documentId, documents.id))
       .where(eq(documents.userId, session.user.id));
 
+    const allDocsCount = statsResult.reduce((acc, curr) => acc + curr.count, 0);
+
     const stats = {
-      totalDocuments: total,
+      totalDocuments: allDocsCount,
       processedCount: statsResult.find((s) => s.status === "processed")?.count || 0,
       errorCount: statsResult.find((s) => s.status === "error")?.count || 0,
       totalAmount: parseFloat(totalAmountResult[0]?.sum || "0"),
     };
 
     return NextResponse.json({
-      documents: filteredDocs,
+      documents: docs,
       total,
       page,
       limit,

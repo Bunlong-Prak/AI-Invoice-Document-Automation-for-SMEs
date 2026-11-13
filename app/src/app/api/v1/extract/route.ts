@@ -7,6 +7,7 @@ import { saveFile } from "@/lib/storage";
 import { extractTextFromFile } from "@/lib/ocr";
 import { extractInvoiceData, extractInvoiceDataFromImage } from "@/lib/ai-extract";
 import { checkUsageLimit, logUsage } from "@/lib/usage";
+import { parseNumeric } from "@/lib/utils";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
@@ -130,8 +131,8 @@ export async function POST(request: NextRequest) {
           invoiceNumber: invoiceData.invoice_number || null,
           date: invoiceData.date || null,
           currency: invoiceData.currency || "USD",
-          totalAmount: invoiceData.total_amount || null,
-          taxAmount: invoiceData.tax_amount || null,
+          totalAmount: parseNumeric(invoiceData.total_amount),
+          taxAmount: parseNumeric(invoiceData.tax_amount),
           rawText,
           rawJson: JSON.stringify(invoiceData),
         })
@@ -144,8 +145,8 @@ export async function POST(request: NextRequest) {
             invoiceId: invoice.id,
             description: item.description || null,
             quantity: item.quantity || null,
-            unitPrice: item.unit_price || null,
-            total: item.total || null,
+            unitPrice: parseNumeric(item.unit_price),
+            total: parseNumeric(item.total),
             sortOrder: index,
           }))
         );

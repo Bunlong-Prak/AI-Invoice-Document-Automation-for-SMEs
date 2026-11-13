@@ -1,15 +1,34 @@
 import fs from "fs";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
 
 /**
  * Extract text from a digital (selectable-text) PDF using pdf-parse.
- * Returns empty string for scanned/image-only PDFs.
+ * Handles both pdf-parse v2 (class-based) and v1 (function-based).
  */
 export async function extractTextFromPdf(filePath: string): Promise<string> {
   const buffer = fs.readFileSync(filePath);
-  const result = await pdfParse(buffer);
-  return result.text || "";
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pdfModule = require("pdf-parse");
+
+  // pdf-parse v2 exports a PDFParse class
+  if (pdfModule.PDFParse) {
+    const parser = new pdfModule.PDFParse({ data: buffer });
+    const result = await parser.getText();
+    return result.text || "";
+  }
+
+  // pdf-parse v1 exported a default function
+  if (typeof pdfModule === "function") {
+    const result = await pdfModule(buffer);
+    return result.text || "";
+  }
+
+  if (typeof pdfModule.default === "function") {
+    const result = await pdfModule.default(buffer);
+    return result.text || "";
+  }
+
+  throw new Error("Unable to initialize PDF parser");
 }
 
 export async function extractTextFromFile(

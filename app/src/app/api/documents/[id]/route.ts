@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { documents, extractedInvoices, lineItems } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { deleteFile } from "@/lib/storage";
 
 export async function GET(
   request: NextRequest,
@@ -67,6 +68,22 @@ export async function DELETE(
   const { id } = await params;
 
   try {
+    const doc = await db
+      .select({ id: documents.id, filename: documents.filename })
+      .from(documents)
+      .where(and(eq(documents.id, id), eq(documents.userId, session.user.id)))
+      .limit(1);
+
+    if (doc.length === 0) {
+      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+    }
+
+    // Delete stored file from disk/tmp
+    await deleteFile(doc[0].filename).catch((err) => {
+      console.warn("Could not delete file from storage:", err);
+    });
+
+    // Delete document row (cascades to extracted invoices and line items)
     await db
       .delete(documents)
       .where(and(eq(documents.id, id), eq(documents.userId, session.user.id)));
